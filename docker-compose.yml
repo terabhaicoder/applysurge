@@ -1,0 +1,150 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+      - NEXT_PUBLIC_SOCKET_URL=http://localhost:8000
+    depends_on:
+      - backend
+    networks:
+      - jobpilot-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./storage:/app/storage
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    command: uvicorn app.main:socket_app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - jobpilot-network
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.worker
+    volumes:
+      - ./backend:/app
+      - ./storage:/app/storage
+    env_file:
+      - .env
+    depends_on:
+      - backend
+      - rabbitmq
+      - redis
+    command: celery -A worker.celery_app worker --loglevel=info --concurrency=4 -Q default,scraping,emails
+    networks:
+      - jobpilot-network
+
+  worker-browser:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.worker
+    volumes:
+      - ./backend:/app
+      - ./storage:/app/storage
+    env_file:
+      - .env
+    depends_on:
+      - backend
+      - rabbitmq
+      - redis
+    command: celery -A worker.celery_app worker --loglevel=info --concurrency=2 -Q browser
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+    networks:
+      - jobpilot-network
+
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.worker
+    volumes:
+      - ./backend:/app
+    env_file:
+      - .env
+    depends_on:
+      - worker
+    command: celery -A worker.celery_app beat --loglevel=info
+    networks:
+      - jobpilot-network
+
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-jobpilot}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-jobpilot_pass}
+      - POSTGRES_DB=${POSTGRES_DB:-jobpilot_db}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jobpilot -d jobpilot_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - jobpilot-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - jobpilot-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER:-jobpilot}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS:-rabbitmq_pass}
+      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit consumer_timeout 7200000
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    networks:
+      - jobpilot-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  rabbitmq_data:
+
+networks:
+  jobpilot-network:
+    driver: bridge
