@@ -130,7 +130,7 @@ def create_app() -> FastAPI:
         domain = settings.DOMAIN
         app.add_middleware(
             TrustedHostMiddleware,
-            allowed_hosts=[domain, f"*.{domain}", f"api.{domain}", "localhost"],
+            allowed_hosts=[domain, f"*.{domain}", f"api.{domain}"],
         )
 
     # Rate limiting middleware

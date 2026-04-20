@@ -52,6 +52,23 @@ backend/storage/
 # Backups
 backups/
 
+# Personal notes / prompts
+Overleaf*.txt
+DEPLOY.txt
+audit-prompt.md
+job-agent-complete-prompt.md
+
+# Screenshots
+screenshot_*.png
+
+# Env files
+.env
+.env.local
+.env.production
+.env.example
+.env.prod.example
+frontend/.env.local
+
 # Misc
 *.bak
 *.tmp
