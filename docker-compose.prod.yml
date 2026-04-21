@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   traefik:
-    image: traefik:v3.4
+    image: traefik:v2.11
     command:
       - "--api.dashboard=false"
       - "--providers.docker=true"
@@ -35,6 +35,7 @@ services:
         NEXT_PUBLIC_API_URL: https://api.${DOMAIN}/api/v1
         NEXT_PUBLIC_SOCKET_URL: https://api.${DOMAIN}
         NEXT_PUBLIC_GOOGLE_CLIENT_ID: ""
+    volumes: []
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)"
