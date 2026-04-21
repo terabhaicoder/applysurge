@@ -55,6 +55,7 @@ backups/
 # Personal notes / prompts
 Overleaf*.txt
 DEPLOY.txt
+HOW_TO_DEPLOY.txt
 audit-prompt.md
 job-agent-complete-prompt.md
 

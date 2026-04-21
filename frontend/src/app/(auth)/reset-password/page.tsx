@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSearchParams } from "next/navigation";
@@ -9,7 +9,7 @@ import { CheckCircle2, XCircle, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { resetPasswordSchema, ResetPasswordFormData } from "@/lib/validations";
 
-export default function ResetPasswordPage() {
+function ResetPasswordPageContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const [status, setStatus] = useState<"form" | "success" | "error">("form");
@@ -156,5 +156,13 @@ export default function ResetPasswordPage() {
         </button>
       </form>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="w-4 h-4 animate-spin text-primary" /></div>}>
+      <ResetPasswordPageContent />
+    </Suspense>
   );
 }

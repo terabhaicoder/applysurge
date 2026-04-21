@@ -1,0 +1,2557 @@
+================================================================================
+    COMPLETE INTERVIEW PREPARATION - PAARTH PANTHRI (SDE, ~1 YoE)
+    Resume + Projects + FAANG Interview Patterns + CS Fundamentals
+================================================================================
+
+TABLE OF CONTENTS:
+  PART 0: Self Introduction & HR Round
+  PART 1: Resume Deep-Dive Questions (project-wise)
+  PART 2: System Design
+  PART 3: CS Fundamentals (OS, DBMS, Networking, OOP)
+  PART 4: Technology-Specific (Kafka, Redis, MongoDB, PostgreSQL, Docker)
+  PART 5: Language-Specific (Python, JavaScript/TypeScript)
+  PART 6: AI/LLM Engineering
+  PART 7: Behavioral Questions (STAR Format)
+  PART 8: DSA Patterns & Topics
+
+
+================================================================================
+PART 0: SELF INTRODUCTION & HR ROUND
+================================================================================
+
+--------------------------------------------------------------------------------
+0.1 SELF INTRODUCTION (Keep under 90 seconds)
+--------------------------------------------------------------------------------
+
+Framework: PRESENT -> PAST -> FUTURE
+
+"Hi, I'm Paarth Panthri. I'm currently working as a Software Developer at
+August Innovate in Bengaluru, where I build backend systems for enterprise
+document processing — workflow engines that handle 200+ documents concurrently,
+multi-model AI extraction pipelines using GPT-4o, Gemini, and Claude, and
+SAP ERP integrations for automated invoice posting.
+
+I graduated from VIT Vellore in 2025 with a B.Tech in Computer Science,
+8.74 CGPA. I've built 3 products end-to-end — the enterprise invoice
+automation system at work, an AI-powered job application platform that
+automates 500+ applications per month using browser automation and LLM-based
+form filling, and a full-stack event planning marketplace with semantic
+search using pgvector and OpenAI embeddings.
+
+My core strengths are Python backend development, distributed systems with
+Kafka and Redis, and AI/LLM integration. I've also worked with the full
+JavaScript/TypeScript stack — Next.js, React, Node, Express, Drizzle ORM.
+
+I'm looking for a role where I can work on larger-scale systems and grow
+alongside a strong engineering team. That's what excites me about
+[Company Name] — [1-2 specific things about their engineering/product]."
+
+TIPS:
+- Tailor the last line for each company. Research their engineering blog,
+  tech stack, or a specific product feature.
+- Mention numbers where possible: "processing 200+ documents concurrently",
+  "500+ job applications per month", "26+ database tables"
+- Practice saying it out loud. If it feels robotic, make it more natural.
+- End with a hook — something that invites a follow-up question.
+
+--------------------------------------------------------------------------------
+0.2 HR / MANAGERIAL ROUND QUESTIONS
+--------------------------------------------------------------------------------
+
+Q: Why do you want to leave your current company?
+A: "I've learned a lot at August Innovate — I got to build production systems
+   from scratch, work directly with enterprise clients, and own features
+   end-to-end. But I'm at a point where I want to work on larger-scale
+   systems, collaborate with a bigger engineering team, and tackle more
+   complex distributed systems challenges. I'm looking for that next level
+   of growth."
+   NEVER badmouth your current employer.
+
+Q: Why [Target Company]?
+A: Be SPECIFIC. Generic answers ("great culture", "big company") are weak.
+   Research: their engineering blog, open-source projects, specific products,
+   tech stack, recent launches.
+   Example: "I've been following your engineering blog — the way your team
+   handles [specific thing] at scale is exactly the kind of problem I want
+   to work on. My experience with [relevant skill] maps well to that."
+
+Q: Where do you see yourself in 5 years?
+A: "I want to grow into a senior engineer who can own the technical direction
+   of a system. I want to deepen my expertise in distributed systems and
+   AI engineering while also developing the ability to mentor others and
+   drive architectural decisions. I'm not chasing titles — I'm chasing
+   the ability to have real technical impact."
+
+Q: What are your salary expectations?
+A: TIPS:
+   - Research on levels.fyi, Glassdoor, Blind for the specific company+role
+   - Give a range, not a single number
+   - "Based on my research for this role and my experience level, I'm looking
+     at [X-Y LPA]. But I'm flexible — the overall opportunity, growth, and
+     team matter more to me than a specific number."
+   - If they push: "What's the range budgeted for this role?"
+   - NEVER give your current salary first. If asked: "I'd prefer to focus
+     on the market rate for this role rather than my current compensation."
+
+Q: Are you interviewing elsewhere?
+A: Be honest. Having other interviews/offers gives you leverage.
+   "Yes, I'm in conversations with a couple of other companies, but [this
+   company] is a strong preference for me because [specific reason]."
+
+Q: What's your biggest weakness?
+A: Pick something real but non-fatal. Show self-awareness + active improvement.
+   "I sometimes over-engineer solutions — I want to account for every edge
+   case upfront. I've learned to check myself by starting with the simplest
+   working solution first, then iterating. Building ApplySurge taught me
+   that shipping fast and iterating beats perfect-on-day-one."
+   NEVER say "I work too hard" or "I'm a perfectionist."
+
+Q: What would you do in your first 30/60/90 days?
+A: "First 30 days: understand the codebase, the deployment pipeline, the
+   architecture. Sit with the team, understand how things work and why
+   decisions were made. Start with small bug fixes or minor features.
+   60 days: pick up medium-sized features independently. Identify areas
+   where I can contribute based on my strengths.
+   90 days: own features end-to-end, start contributing to design
+   discussions, identify improvements I can drive."
+
+Q: How do you handle pressure / tight deadlines?
+A: "I break the problem down into what's essential vs nice-to-have. I
+   communicate with stakeholders about what's realistic. At August, we
+   had a client deadline for the SAP integration — I focused on getting
+   the core posting flow working first, then added the edge cases and
+   validation incrementally. Delivered on time without cutting corners
+   on the critical path."
+
+Q: How do you handle disagreements with teammates?
+A: "I focus on the technical merits, not the person. If I disagree, I
+   present my reasoning with data or examples. If the other person has a
+   better argument, I change my mind — I'm not attached to being right.
+   If we're stuck, I suggest we prototype both approaches quickly and
+   let the results decide."
+
+Q: Tell me about a time you received critical feedback.
+A: Prepare a real example. Show you took it constructively.
+   "Early on, I was told my code was working but hard to follow — I was
+   writing large functions without clear separation. I started breaking
+   things into smaller, well-named functions and writing more config-driven
+   code. The SAP engine I built later has zero hardcoded business logic —
+   everything is template-driven."
+
+Q: Do you prefer working alone or in a team?
+A: "Both, depending on the phase. I like collaborating during design and
+   code reviews — bouncing ideas makes the solution better. But for
+   deep implementation work, I prefer focused solo time. Most of my
+   projects involved me building the backend independently while
+   coordinating with frontend engineers."
+
+
+================================================================================
+PART 1: RESUME DEEP-DIVE QUESTIONS
+================================================================================
+
+Every bullet on your resume is a door an interviewer can open. Here's every
+question they might ask, with answers that sound natural in an interview.
+
+--------------------------------------------------------------------------------
+1.1 WORKFLOW EXECUTION ENGINE (15+ node types, 200+ docs concurrently)
+--------------------------------------------------------------------------------
+
+Q: Walk me through how the workflow engine works end-to-end.
+A: "It's a DAG-based workflow executor. Workflows are defined as JSON
+   configurations with nodes and edges — stored in MongoDB. When a document
+   comes in, the engine parses the DAG, finds the start node, and executes
+   nodes sequentially following the edges.
+
+   Each node type has its own handler — there are conditional nodes for
+   branching, loop nodes for iterating over line items, database lookup
+   nodes, API call nodes, LLM nodes, and so on. The edges have 'success'
+   and 'failure' handles, so the execution path is dynamic based on the
+   data.
+
+   Think of it as a configurable state machine — the same engine handles
+   completely different document types just by swapping the workflow
+   configuration."
+
+Q: What are all 15+ node types? Explain a few.
+A: "The main ones are:
+   - Document Node (entry point)
+   - Conditional Node (if/else branching with operators like equals,
+     contains, regex, greater than, etc.)
+   - ForEach Node (loops over arrays like line items, aggregates results)
+   - Database Node (queries custom tables with variable templating)
+   - Function Node (executes Python expressions with restricted builtins)
+   - API Node (makes HTTP calls with dynamic URL/header/body)
+   - Data Comparison Node (compares extracted data vs source data)
+   - LLM Node (sends data to an LLM for validation or classification)
+   - Approval Node (pauses the flow for human review)
+   - Alert/Email/Slack Nodes (notifications)
+   - And a few more for document transformation and status updates.
+
+   For example, the Conditional Node evaluates a condition against the
+   current flow context — if true, it follows the success edge to one
+   subgraph, if false, it goes to another. This lets us handle different
+   scenarios within the same workflow.
+
+   The ForEach Node iterates over an array — like all line items in an
+   invoice — runs child nodes for each item, and collects the aggregated
+   results when done."
+
+Q: How is concurrency handled for 200+ documents?
+A: "We use an asyncio semaphore capped at 200 concurrent operations. Each
+   document extraction acquires the semaphore before processing. Since
+   the work is mostly I/O-bound — API calls to LLM providers, MongoDB
+   reads/writes — async I/O lets us overlap these operations efficiently
+   without needing multiple threads or processes."
+
+Q: How do you handle errors in the workflow?
+A: "There are two categories. Infrastructure errors — like an API timeout
+   or database connection failure — these stop the flow execution and are
+   logged for debugging. Then there are validation errors — like an amount
+   mismatch or a missing field — these are collected and shown to the user
+   but don't stop the flow.
+
+   Everything is tracked in an execution trace, so if something goes wrong,
+   we can see exactly which node failed and why."
+
+Q: How are workflows defined? Can non-technical users create them?
+A: "Workflows are declarative JSON — arrays of nodes and edges. But we also
+   built a visual drag-and-drop editor on the frontend using React Flow.
+   Users can drag node types onto a canvas, connect them with edges, and
+   configure each node's parameters. The editor generates the JSON schema
+   automatically and saves it. So yes, non-technical users can create and
+   modify workflows without writing code."
+
+Q: What's the difference between this and a simple if-else chain?
+A: "This is a full DAG with handle-based routing — not linear. A conditional
+   node can branch into completely different subgraphs. You can have loops,
+   parallel validation paths, and dynamic execution based on the data. The
+   execution path for one document can be completely different from another
+   using the same workflow. It's more like a state machine than a script."
+
+Q: How did you achieve ~90% cache hit rate?
+A: "The 90% is specifically for config and template data — not all database
+   queries. Template definitions and configuration data change very rarely,
+   maybe once a day at most. So we cache them with a 24-hour TTL. Each
+   request that would otherwise need 3-5 database round-trips for template
+   and config lookups hits the cache instead. We measured this by comparing
+   cache hits vs misses in our Redis metrics."
+
+Q: How does real-time status update work for document processing?
+A: "We use Server-Sent Events (SSE), not WebSockets. SSE is simpler for
+   our use case — it's one-directional from server to client. The server
+   maintains a queue per connection (max 100 messages). We send heartbeats
+   to detect stale connections — if no heartbeat for 30 seconds or more
+   than 50 messages are queued up, we mark the connection as unhealthy
+   and clean it up. If a user disconnects, pending messages are buffered
+   in Redis lists so they can be delivered when they reconnect."
+
+Q: How does multi-tenancy work?
+A: "Each tenant gets its own MongoDB database — the naming convention is
+   tenant_{tenant_id}_{environment}. There's also a platform database
+   for cross-tenant data like templates and user management. Tenant
+   resolution happens at the auth layer — either from the Firebase JWT
+   token or via organization_id query parameter. The codebase supports
+   two versions: v1 uses tenant_id directly from the token, v2 maps
+   organization_id to tenant_id."
+
+Q: How does authentication work?
+A: "Two auth mechanisms. Primary is Firebase JWT token verification —
+   the frontend gets a token from Firebase, sends it in the Authorization
+   header, and the backend verifies it using Firebase Admin SDK. We also
+   support API key auth as an alternative path for system-to-system calls.
+   Role-based access control is layered on top — users have roles, roles
+   have permissions, and we check permissions on each endpoint."
+
+Q: How do you handle cache invalidation?
+A: "Pattern-based deletion using Redis SCAN — not KEYS, because SCAN is
+   non-blocking. We scan in batches of 1000 keys, delete matching keys,
+   and continue until done. We have specific invalidation methods for
+   different data types — templates, validation flows, extraction modes,
+   user sessions. After invalidation, we immediately cache the new version
+   so the next request hits warm cache. There's also a nuclear option that
+   invalidates all 16 cache patterns at once, but we rarely need it."
+
+Q: What happens if Redis goes down?
+A: "Redis operations are wrapped in try/except and fail silently — they
+   return False or None without crashing the application. The system
+   degrades gracefully to hitting MongoDB directly. It's slower, but
+   functional. This was a deliberate design choice — caching should
+   improve performance, not be a single point of failure."
+
+Q: How does the MongoDB connection pool work?
+A: "We use PyMongo with a connection pool — maxPoolSize of 50 and
+   minPoolSize of 5. The driver manages connections automatically,
+   checking them out for queries and returning them to the pool. This
+   avoids the overhead of creating a new connection per request while
+   keeping resource usage bounded."
+
+Q: How do you serialize MongoDB ObjectIds for Kafka?
+A: "MongoDB uses ObjectId for document IDs and datetime objects for
+   timestamps. These aren't JSON-serializable by default. We use a
+   custom JSON encoder that converts ObjectIds to strings and datetimes
+   to ISO format strings before publishing to Kafka."
+
+--------------------------------------------------------------------------------
+1.2 SAP ERP POSTING ENGINE (Non-PO, Rental, ZHPL)
+--------------------------------------------------------------------------------
+
+Q: What are the 3 SAP modes and how do they differ?
+A: "Each mode handles a different type of document flow:
+
+   Non-PO is for invoices without purchase orders. It has 3 sub-modes:
+   NonPO1 does invoice-level matching with PO and POD documents. NonPO2
+   handles scenarios where multiple rows map to the same invoice, with
+   deduplication and PO utilization tracking. NonPO3 does full 3-way
+   matching between Invoice, PO, and POD.
+
+   Rental is for property lease billing — matching vendor agreements to
+   invoices. It has a 3-tier vendor matching fallback: exact name match,
+   cost center based matching, and fuzzy string matching with a 60%
+   similarity threshold.
+
+   ZHPL is for cost approval consolidation — it merges multiple cost
+   center rows into single paired postings in SAP's specific format."
+
+Q: How does debit/credit pair generation work?
+A: "Every SAP posting needs balanced entries — a debit to an expense
+   account and a credit to a vendor account under the same counter.
+   The system takes the extracted invoice data, looks at the template
+   configuration for which fields map to which SAP columns, and generates
+   these pairs automatically.
+
+   For example, in one mode, multiple invoice rows might map to the same
+   posting counter — the debit is the sum of all GL amounts, and the
+   credit is the total vendor amount. The key thing is that all the
+   accounting rules are config-driven — different clients have different
+   posting keys, GL accounts, and tax codes, and we handle all of that
+   through configuration, not code changes."
+
+Q: How does GST tax code resolution work?
+A: "The system looks at the line items for IGST, CGST, and SGST amounts
+   using field names configured per template. It calculates the effective
+   tax rate — tax amount divided by base amount — and then looks up the
+   corresponding SAP tax code from a configuration table. Nothing is
+   hardcoded — if a client has different tax codes, we just update the
+   config."
+
+Q: How does vendor master lookup work in SAP posting?
+A: "When generating SAP postings, we need the vendor's SAP account code
+   and withholding tax code. The system looks up a vendor master table —
+   first tries matching by vendor name using regex, falls back to matching
+   by GSTIN. If multiple matches exist, we prefer the one with the main
+   TDS code. The lookup result is cached per batch to avoid repeated
+   database queries for the same vendor."
+
+Q: How does duplicate invoice detection work?
+A: "Before generating SAP postings, we check the processing history for
+   the past 365 days for any invoice with the same number. If found, the
+   posting gets flagged with a HOLD prefix in the remarks. This prevents
+   double-payment — a critical requirement for enterprise accounting."
+
+Q: How does the business place lookup work?
+A: "SAP requires a business place code based on the state. We look up
+   a business place table using regex matching on the state name. Each
+   lookup is cached per row to avoid redundant database calls within
+   the same batch."
+
+Q: What about the ZHPL mode specifically?
+A: "ZHPL is actually the simplest mode — it's pass-through. The user
+   uploads a pre-formatted Excel file that already has the debit/credit
+   pairs. Our code only renames the columns according to the SAP column
+   mapping configuration. No database lookups needed — the data is
+   already complete. We just sort by counter and posting key, apply the
+   column mapping, and write the output Excel."
+
+Q: Why not just hardcode the SAP format?
+A: "Because enterprise clients have wildly different SAP configurations.
+   Different posting keys, different GL account structures, different tax
+   codes. If we hardcoded it, onboarding a new client would mean changing
+   code. With our template-based approach, new clients are onboarded by
+   changing configuration only. That's critical for a multi-tenant SaaS
+   product — you can't deploy different code per client."
+
+--------------------------------------------------------------------------------
+1.3 APACHE KAFKA PIPELINES (6+ microservices)
+--------------------------------------------------------------------------------
+
+Q: How is Kafka used in your system?
+A: "We have 6 topics forming an event-driven pipeline. When a document is
+   uploaded, a message goes to the 'document-uploaded' topic. The extraction
+   service consumes this, processes the document with an LLM, and publishes
+   to 'extraction-complete'. Similarly, there are topics for template
+   creation requests and completions, and validation flow creation.
+
+   Each microservice has its own consumer group, so each service gets its
+   own copy of every message. Within a service, Kafka distributes partitions
+   across instances for horizontal scaling."
+
+Q: How do you achieve exactly-once semantics?
+A: "Honestly, we do at-least-once with idempotent processing, not true
+   exactly-once. On the producer side, we set acks=all so all replicas
+   acknowledge. On the consumer side, we do frequent offset commits. And
+   at the application level, we track processed document IDs to avoid
+   reprocessing if a consumer restarts.
+
+   True exactly-once in Kafka requires the transactional API with
+   idempotent producers — we didn't need that level of guarantee since
+   our processing is naturally idempotent."
+
+Q: Tell me about the batch publishing with compression.
+A: "We configure the producer with gzip compression and a 100ms linger
+   time. That means the producer waits up to 100ms to batch multiple
+   messages together before sending. Combined with compression, this
+   significantly reduces network overhead — instead of sending many small
+   messages individually, we send fewer compressed batches."
+
+Q: What happens when a consumer fails?
+A: "The consumer sends heartbeats every second. If Kafka doesn't receive
+   a heartbeat for 30 seconds, it triggers a consumer group rebalance
+   and reassigns that consumer's partitions to other healthy consumers.
+   Failed messages are logged and the consumer moves on. We don't have
+   a formal dead letter queue right now — errors are tracked in
+   application state."
+
+Q: How would you add a Dead Letter Queue?
+A: "I'd create a separate 'dead-letter' topic. In the consumer, after
+   N retries of a failed message, publish it to the DLQ topic with error
+   metadata — timestamp, exception, retry count. Then a separate monitoring
+   service or dashboard consumes the DLQ for alerting and manual
+   reprocessing. It's a pattern we'd add as the system grows."
+
+Q: How does Kafka authentication work in your system?
+A: "We use SASL_PLAINTEXT authentication. The producer and consumer
+   authenticate with the Kafka broker using username/password credentials.
+   This is standard for internal services where the network is already
+   trusted but you still want access control."
+
+Q: What's the difference between send() and send_and_wait() in your producer?
+A: "We use both depending on criticality. For document upload events,
+   we use fire-and-forget send() — it returns a future but we don't
+   await it, so the API response isn't blocked. For critical events
+   like extraction completion, we use send_and_wait() which blocks
+   until all replicas acknowledge. This gives us reliability guarantees
+   for events that drive downstream processing."
+
+Q: How do you handle batch publishing?
+A: "For bulk operations like publishing multiple documents, we fire all
+   the send futures at once, then await each one. This gives us
+   parallelism in the publishing step while still confirming delivery.
+   The producer's linger_ms=100 helps batch these into fewer network
+   calls automatically."
+
+Q: Kafka vs RabbitMQ — when to use which?
+A: "We actually use both in different projects. Kafka for the document
+   pipeline because we need strong ordering, replay capability, and
+   multiple consumers reading the same events. RabbitMQ for the job
+   application task queue because it has better support for flexible
+   routing, priority queues, and per-task acknowledgment — classic
+   task queue patterns."
+
+--------------------------------------------------------------------------------
+1.4 MULTI-MODEL LLM EXTRACTION (GPT-4o, Gemini, Claude)
+--------------------------------------------------------------------------------
+
+Q: How does multi-model routing work?
+A: "Different LLM providers have different strengths and input requirements.
+   The model is configured per template — so one document type might use
+   GPT-4o while another uses Gemini. The routing logic handles the
+   differences: some models need PDF-to-image conversion first (OpenAI
+   vision models), while others accept PDFs directly (Gemini, Claude).
+
+   This gives us flexibility — if one model works better for a particular
+   document format, we just change the template config."
+
+Q: How does prompt templating work?
+A: "We have a base extraction prompt that defines the output format —
+   structured key-value data plus table data. A prompt builder dynamically
+   constructs the field list by merging field names with their descriptions
+   from the template configuration. So the model knows exactly what to
+   extract and what each field means. This is all driven by the template —
+   adding a new document type means defining new fields and descriptions,
+   not changing the prompt logic."
+
+Q: How do you handle rate limiting across models?
+A: "We have a rate limiter that manages API quotas per provider using Redis
+   for distributed state. Even with multiple extraction service instances
+   running, the total API calls stay within provider limits. This works
+   alongside the asyncio semaphore for concurrency control — the semaphore
+   limits how many documents we process at once, and the rate limiter
+   ensures we don't exceed API quotas."
+
+Q: How is 95%+ accuracy measured?
+A: "Field-level accuracy — we compare extracted values against manually
+   verified ground truth documents. The validation workflow checks each
+   extracted field against expected values. Fields that pass validation
+   are considered accurate. The 95%+ figure is across our production
+   document corpus for templates that have been properly configured."
+
+Q: What happens when extraction fails?
+A: "Failed extractions are tracked with a FAILED status. The system
+   excludes failed documents from downstream matching to avoid propagating
+   errors. For low-confidence results, the validation workflow can flag
+   them for manual review through approval nodes — a human reviews and
+   corrects before the data moves forward."
+
+Q: How do you handle different document formats?
+A: "The template system abstracts document formats. Each template defines
+   what fields to extract (structured header data + table line items),
+   field descriptions for the LLM prompt, and which model works best for
+   that document type. Supporting a new format means creating a new
+   template — no code changes needed. Templates can be created manually
+   via the visual editor or automatically via the LangGraph agent system."
+
+Q: How does the extraction service communicate with the main backend?
+A: "Through Kafka. The main backend publishes extraction requests to a
+   topic. The extraction microservice consumes these, processes documents
+   with the configured LLM, and publishes completion events. The main
+   backend's consumer picks these up and stores results in MongoDB. This
+   decoupling means the extraction service can scale independently and
+   we can update models without touching the main backend."
+
+Q: What's the default LLM model?
+A: "Claude Sonnet is our current default for template creation, but the
+   model is configurable per template creation request. For extraction,
+   each template can specify its preferred model — some documents extract
+   better with GPT-4o vision, others work fine with Gemini. This
+   per-template model selection was informed by testing different models
+   on different document types."
+
+--------------------------------------------------------------------------------
+1.5 LANGGRAPH-BASED AI AGENTS (template auto-generation)
+--------------------------------------------------------------------------------
+
+Q: How does the multi-agent system work?
+A: "There are 3 specialized agents in a LangGraph workflow:
+
+   First, a PDF Analysis Agent analyzes the document structure and
+   identifies what fields exist and how they relate to each other.
+
+   Second, a Template Creation Agent takes that analysis and generates
+   the extraction template — the field definitions, data types, and
+   descriptions.
+
+   Third, a Validation Flow Agent designs the validation workflow —
+   what checks to run on the extracted data.
+
+   These agents are orchestrated as a 9-node DAG in LangGraph. Each
+   agent's output feeds into the next through shared state. The whole
+   pipeline takes a PDF and produces a ready-to-use template with
+   validation rules."
+
+Q: How do agents collaborate?
+A: "Through shared state. LangGraph maintains a state object that each
+   agent reads from and writes to. The PDF Analysis Agent adds the
+   document structure, the Template Creation Agent reads that and adds
+   the template schema, and so on. There's also a conversation memory
+   manager for the interactive chat interface."
+
+Q: There's a chat interface too?
+A: "Yes, we also built conversational agents for guided template creation.
+   There's an intent router that figures out what the user wants, then
+   routes to specialized agents — document analyzer, template creator,
+   validation flow creator, or a general assistant. Non-technical users
+   can create templates by describing what they need in natural language."
+
+Q: What is LangGraph and how is it different from LangChain?
+A: "LangChain is a framework for building LLM applications — it gives you
+   chains for sequential operations and agents for tool-using. LangGraph
+   extends that by adding graph-based execution. Nodes are functions or
+   agents, edges define control flow, and importantly, you can have cycles
+   — loops. This enables multi-step agent workflows with proper state
+   management, conditional branching, and human-in-the-loop patterns.
+   It's essentially a state machine for AI agents."
+
+--------------------------------------------------------------------------------
+1.6 DOCUMENT VALIDATION + 3-WAY MATCHING (Invoice vs PO vs POD)
+--------------------------------------------------------------------------------
+
+Q: Walk me through the 3-way matching algorithm.
+A: "The goal is to match each invoice against its Purchase Order and
+   Proof of Delivery to validate correctness.
+
+   Step 1: Build lookup dictionaries from all three document types,
+   keyed by their respective identifying numbers — invoice number,
+   PO number, etc.
+
+   Step 2: For each invoice, find its matching PO by PO number. Track
+   how much of the PO value has been utilized across all invoices.
+
+   Step 3: Find the matching POD. This is where it gets interesting —
+   we try multiple matching strategies:
+   - First, direct match by invoice number
+   - If that fails, extract the trailing numeric digits and try a
+     partial match (because different systems format invoice numbers
+     differently — 'INV-2024-12345' vs just '12345')
+   - If that also fails, fall back to matching by PO number
+
+   Step 4: Once matched, resolve derived fields like supply state
+   using a priority chain across the three documents."
+
+Q: Why the numeric suffix matching? Sounds like a hack.
+A: "It's a real-world necessity. In enterprise systems, the same invoice
+   number gets formatted differently across systems. The vendor's invoice
+   says 'INV-2024-12345', the POD system records it as '12345', and the
+   PO system has something else entirely. We discovered this when a major
+   client's matching was failing — the numbers were the same, just with
+   different prefixes. Extracting the trailing digits solved it cleanly."
+
+Q: What fuzzy matching do you use?
+A: "Python's SequenceMatcher from difflib. We compute similarity ratios
+   between strings — typically with a 70% threshold. Main use case is
+   vendor name matching in rental mode, where names have slight variations
+   like 'ABC Pvt Ltd' vs 'ABC Private Limited'. We chose SequenceMatcher
+   over libraries like thefuzz because it's in the standard library —
+   no extra dependency — and good enough for our use case."
+
+--------------------------------------------------------------------------------
+1.7 APPLYSURGE - AUTONOMOUS JOB APPLICATION PLATFORM
+--------------------------------------------------------------------------------
+
+Q: How does the browser automation work?
+A: "We use Playwright with a browser pool pattern — a singleton manager
+   that controls up to 5 concurrent browser contexts using an asyncio
+   semaphore. Each context gets a fresh identity — random user agent from
+   7 modern Chrome/Firefox versions, random viewport from 5 sizes, and
+   geolocation set to the user's city.
+
+   The key is the 8 stealth scripts injected into every page:
+   1. Override navigator.webdriver to undefined
+   2. Fake the Chrome object
+   3. Override permissions query
+   4. Randomize canvas fingerprint (shift RGB values by -5 to +5)
+   5. Spoof WebGL vendor/renderer to Intel
+   6. Fake plugins and language arrays
+   7. Override hardware concurrency
+   8. Override platform strings
+
+   We also launch real Chrome (not bundled Chromium) with automation
+   flags disabled. The combination makes it nearly impossible for bot
+   detection systems to distinguish from a real user."
+
+Q: How do you simulate human-like behavior?
+A: "Several techniques. Typing has random delays between 50-150ms per
+   character, with a 5% chance of a 'thinking pause' of 300-800ms mid-
+   typing. Page scrolling happens in 3-6 randomized steps with pauses
+   between each scroll increment. Clicks have random delays of 0.1-0.5
+   seconds before clicking and 0.5-1.5 seconds after. All these small
+   randomizations make the interaction pattern look natural."
+
+Q: How does the AI form-filling engine work?
+A: "Two layers. First, a pattern matching layer with 70+ regex patterns
+   organized by category — personal fields, professional, education,
+   skills, work authorization. Each pattern maps a form label to a user
+   profile field.
+
+   For text inputs, we type with human-like delays. For dropdowns, we
+   match the user's profile value against option text. For radio buttons,
+   we convert booleans to yes/no answers. For file uploads, we attach
+   the user's resume.
+
+   Smart defaults handle common edge cases — work authorization defaults
+   to true for Indian users, willing to relocate defaults to true,
+   notice period maps to standard bands like 'Immediate', '15 Days',
+   '1 Month', etc.
+
+   For unknown or complex fields — like 'Why do you want to work here?'
+   — we fall back to an LLM which generates an appropriate answer based
+   on the user's profile and the job description."
+
+Q: How does the distributed task pipeline work?
+A: "Celery with RabbitMQ as the broker and Redis as the result backend.
+   4 dedicated queues with routing:
+   - 'browser' queue: long-running automation tasks (apply, login)
+   - 'scraping' queue: job discovery on LinkedIn, Naukri, startups
+   - 'emails' queue: cold emails, followups, classification
+   - 'default' queue: everything else
+
+   Important design decision: we disabled acks_late. Normally, you want
+   tasks to acknowledge only after completion for reliability. But our
+   browser tasks can run up to an hour, which exceeds RabbitMQ's consumer
+   timeout. So tasks ack immediately on receipt. If a worker crashes,
+   we detect it via the session lock mechanism.
+
+   Workers are configured with prefetch_multiplier=1 (one task at a time
+   for browser work), max_tasks_per_child=100 (restart after 100 tasks
+   to prevent memory leaks), and max_memory_per_child=512MB.
+
+   Celery Beat handles scheduled jobs — daily limit resets at midnight,
+   summary emails at 8pm, stats update at 11:55pm, startup discovery
+   at 6am, and outreach campaigns at 9am and 2pm."
+
+Q: What happens when a CAPTCHA is detected?
+A: "We check 18 DOM selectors covering reCAPTCHA, hCaptcha, image CAPTCHAs,
+   and platform-specific challenges (LinkedIn and Naukri have their own).
+   We also check page text for 8 patterns like 'verify you are human'
+   and 'unusual activity'. And we inspect iframe URLs for captcha-related
+   domains.
+
+   If detected, we DON'T try to solve it. Instead:
+   1. Take a screenshot and upload it to S3
+   2. Publish a real-time notification via Redis pub/sub
+   3. Store the notification in a Redis list (keep last 100, 7-day TTL)
+   4. Flag that application as failed
+   5. Move to the next job in the queue
+
+   The user gets notified instantly via WebSocket and can manually
+   intervene if they want."
+
+Q: How does AI-powered job matching work?
+A: "LLM-based scoring with 5 weighted components:
+   - Skills score (0-35): overlap between candidate and job requirements
+   - Experience score (0-25): career level alignment
+   - Role score (0-20): title/responsibility fit
+   - Location score (0-10): remote/on-site/hybrid match
+   - Salary score (0-10): compensation compatibility
+
+   Hard cap rule: if experience gap is more than 2 years in either
+   direction, overall score is capped at 40 regardless of other factors.
+   This prevents overqualified or underqualified matches.
+
+   We prefer Gemini for scoring (lower cost, good enough quality) with
+   Claude as fallback. Temperature is 0.3 for consistency. The output
+   includes not just scores but also reasoning, strengths, gaps, matched
+   skills, and missing skills — useful for the user to see why a job
+   was matched or rejected.
+
+   The JSON parsing is robust — we handle markdown code fences, trailing
+   commas, and malformed JSON with regex extraction fallbacks. LLMs
+   don't always return clean JSON."
+
+Q: How do you ensure only one automation session runs per user?
+A: "Atomic Redis SET with NX (set-if-not-exists) and EX (expiry) flags.
+   The key is per-user, the TTL is 3900 seconds (65 minutes — matching
+   the task hard time limit of 1 hour plus 5 minute buffer).
+
+   Only one caller can acquire the lock because SET NX is atomic. If
+   the lock exists, the new request is rejected immediately. When the
+   session completes normally, we explicitly delete the lock. If it
+   crashes, the TTL ensures it auto-expires.
+
+   There's also a stop signal mechanism — the user can click 'Stop Agent',
+   which sets a key in Redis. The running task periodically checks for
+   this key using GETDEL (atomic get-and-delete) so only the running
+   worker sees the signal."
+
+Q: How is real-time tracking implemented?
+A: "WebSocket connections with per-user connection management. Auth is
+   via JWT token passed as a query parameter. The server maintains a
+   dictionary mapping user IDs to lists of active WebSocket connections.
+
+   Message types: 'status' for agent state changes, 'log' for activity
+   entries, 'application' for completed applications, 'error' for
+   failures. We also have ping/pong keepalive and event subscription.
+
+   Dead connections are detected when sends fail — we collect them in
+   a dead list and clean up after iterating all connections."
+
+Q: How does session persistence work across automation runs?
+A: "Browser cookies are encrypted with Fernet (AES-128-CBC + HMAC)
+   and stored in Redis with a 7-day TTL. On the next run, we decrypt
+   the cookies, filter out expired ones, and inject them into the new
+   browser context. This avoids re-login on every session, which would
+   look suspicious and trigger security alerts.
+
+   The encryption key is derived from a config secret using SHA-256.
+   All sensitive data — platform passwords, API keys, OAuth tokens —
+   goes through the same encryption layer."
+
+Q: How does the cold email pipeline work?
+A: "End-to-end automated outreach:
+   1. Discovery: scrape startups from YC, Product Hunt, LinkedIn, AngelList
+   2. Contact finding: scrape company website emails, use Hunter.io API
+   3. Email generation: Claude AI writes personalized emails — under 150
+      words, specific subject lines, includes a metric/achievement
+   4. Sending: SendGrid with open tracking (invisible pixel) and click
+      tracking (link wrapping)
+   5. Response classification: rule-based first (pattern matching for
+      'interested', 'not interested', 'out of office'), Claude fallback
+      for ambiguous responses
+   6. Follow-ups: automated 3-day and 7-day follow-ups if no response
+
+   Each response gets a recommended action — respond quickly, provide
+   info, wait and retry, close, or flag for manual review."
+
+Q: How does the rate limiter work?
+A: "Sliding window algorithm using Redis sorted sets. Each request adds
+   a timestamp to the set. We remove entries older than the window,
+   count remaining entries, and allow the request only if the count is
+   under the limit. This is more accurate than fixed-window counting
+   because it doesn't have the boundary problem.
+
+   Rate limit info is returned in response headers — X-RateLimit-Limit,
+   X-RateLimit-Remaining, X-RateLimit-Reset, and Retry-After for 429
+   responses. The limiter identifies users by user ID if authenticated,
+   falls back to IP address."
+
+Q: How does resume parsing work?
+A: "Resumes are uploaded to S3, deduplicated by file hash. The content
+   is parsed from PDF/DOCX into raw text, then AI extracts structured
+   data — skills, experience history, education, certifications, summary.
+   We also generate a quality score and ATS-friendliness score, and
+   create an embedding vector for AI-powered job matching. Resumes are
+   versioned with a primary flag."
+
+--------------------------------------------------------------------------------
+1.8 EVENTZITY - EVENT PLANNING MARKETPLACE
+--------------------------------------------------------------------------------
+
+Q: How does Stripe payment integration work?
+A: "Standard Stripe Connect flow. Client creates a booking, we create a
+   PaymentIntent on the server with the amount, return the client secret
+   to the frontend for Stripe.js to handle the payment UI. On confirmation,
+   we verify the payment status server-side and update the booking.
+   Each vendor has a Stripe Connect account for payouts, with configurable
+   commission rates and payout schedules."
+
+Q: How does semantic search with pgvector work?
+A: "We use Azure OpenAI's text-embedding-3-large model to generate
+   1536-dimensional vectors. For vendors, we create a composite embedding
+   text from their name, category, description, price range, location,
+   and services — not just one field. These are stored in PostgreSQL
+   with the pgvector extension.
+
+   Search uses cosine similarity via the <=> operator. But pure semantic
+   similarity isn't enough for a marketplace. We have a multi-tier
+   boosting system:
+   - Category + location match: +30% boost
+   - Category only: +15%
+   - Location only: +20% (local vendors matter)
+   - Verified vendors: +5%
+   Minimum similarity threshold is 0.20 — below that, results are
+   filtered out."
+
+Q: How does the multi-tier search strategy work?
+A: "We don't just do one search and return results. There are 3 tiers:
+   - Tier 1 (Strict): Exact category and location match
+   - Tier 2 (Fallback): Broader category synonyms — if someone searches
+     'photographer', we also look for 'videography', 'cinematography'.
+     If they search 'Delhi', we expand to 'New Delhi', 'NCR', 'Gurgaon',
+     'Noida'.
+   - Tier 3 (Semantic only): Pure embedding similarity if explicit
+     matching returns nothing.
+
+   This guarantees results even for vague queries while giving priority
+   to precise matches."
+
+Q: Explain the NLP query processing.
+A: "A pipeline with multiple stages:
+   1. Clean the query — lowercase, remove special chars, normalize
+   2. Intent classification via GPT-4o (temperature 0.1 for consistency)
+      — search, browse, compare, plan, budget, with sub-intents like
+      immediate_booking or price_comparison
+   3. Entity extraction via GPT-4o — budget range, guest count, location,
+      event type, preferences, vendor categories. Has a regex fallback
+      if JSON parsing fails. Budget normalization handles '2k' → 2000,
+      '2 lakh' → 200000, '₹25000' → 25000.
+   4. Emotion analysis — keyword-based scoring for excitement, stress,
+      urgency, confidence. This affects how we rank results.
+   5. Complexity assessment — simple/medium/complex based on word count
+      and entity count
+   6. Generate clarification questions for ambiguous queries"
+
+Q: How does the real-time chat work?
+A: "Socket.IO with room-based architecture. Authentication happens in
+   the Socket middleware — we verify Firebase tokens and attach user data
+   to the socket object.
+
+   Each user gets a personal room for notifications. Each conversation
+   gets its own room. When a message is sent:
+   1. Verify user access (vendor by vendor ID, client by Firebase UID)
+   2. Determine sender type (vendor or client)
+   3. Insert message to database
+   4. Broadcast to conversation room
+   5. Send notification to the other participant's personal room
+   6. Update conversation's lastMessageAt and increment unreadCount
+
+   Typing indicators: client emits typing_start, server broadcasts to
+   room, auto-clears after 3 seconds. Read receipts: mark_as_read
+   sets all messages as read and resets unreadCount to zero."
+
+Q: Tell me about the RBAC system.
+A: "Three-layer permission model:
+   1. Roles: super_admin, admin, vendor, customer
+   2. Role-Permission mapping: many-to-many junction table
+   3. Direct user permissions: individual overrides with optional
+      expiry dates — can grant or revoke permissions per user
+
+   Permission check hierarchy:
+   - If user is suspended → denied
+   - If super_admin → always allowed
+   - Check direct user permissions first
+   - Then check role permissions
+   - For resource-specific checks: verify ownership
+
+   We also have content-based visibility — certain UI sections are only
+   visible to specific roles. Admin panel requires admin or super_admin.
+   Vendor dashboard requires vendor or admin."
+
+Q: How does the vendor subscription system work?
+A: "Three tiers: Basic (free), Standard (₹1999/month), Premium
+   (₹4999/month). Each tier unlocks different features — Basic gets
+   listing only, Standard gets analytics and AI tools, Premium gets
+   everything including priority leads.
+
+   Interesting business decision: during launch, ALL vendors get free
+   Premium access (promotional period with configurable dates). New
+   individual vendors also get a 3-month enterprise trial from signup
+   date. This removes friction for onboarding."
+
+Q: How does vendor auto-approval work?
+A: "Instant go-live on registration — no manual admin approval required.
+   When a vendor registers, we create both the vendor record and the
+   application record, start the free trial automatically, and they can
+   immediately start receiving leads. If the registrant doesn't have a
+   Firebase account yet, we create a placeholder user."
+
+Q: Why Drizzle ORM over Prisma?
+A: "Drizzle gives you more SQL-level control — it's closer to writing
+   actual SQL while still being fully type-safe. It doesn't require a
+   separate query engine binary like Prisma, so it's lighter. And
+   critically for us, it has better support for PostgreSQL-specific
+   features like pgvector columns. We have 27+ tables defined in the
+   schema — users, vendors, bookings, payments, chat, plans, AI
+   recommendations, and more."
+
+Q: What frontend patterns do you use?
+A: "React 18 with several patterns:
+   - State: React Context for global state (Auth, Socket, Notifications),
+     React Query (TanStack) for API data caching, local useState for
+     component-level UI state
+   - UI: Radix UI primitives for accessible components, custom styling
+   - Forms: React Hook Form + Zod validation
+   - Real-time: Socket.IO client with auto-reconnect
+   - Charts: Recharts for analytics dashboards
+   - Auth: Firebase Auth SDK with custom AuthContext that merges Firebase
+     state with database user data"
+
+Q: How does venue availability blocking work?
+A: "When a booking is confirmed, the system automatically blocks all
+   dates in the range by generating individual date records with status
+   'booked'. This prevents double-booking at the venue level. The
+   calendar shows booked dates as unavailable."
+
+Q: How does the lead allocation engine work?
+A: "Multi-strategy approach with result fusion:
+   - Semantic search (40% weight): pgvector similarity
+   - Intent-focused (30%): if intent confidence > 80%
+   - Budget optimized (25%): if budget was specified
+   - Urgency prioritized (20%): if urgency score > 0.7
+   - Location proximity (20%): geographic relevance
+
+   Results from all strategies are fused — if a vendor appears in
+   multiple strategies, their scores are combined with weights. Final
+   output: top 5 vendors + top 3 venues.
+
+   Confidence score is calculated from intent confidence, average vendor
+   similarity, query complexity, and entity count.
+
+   Fallback (if AI fails): multi-tier rule-based search that guarantees
+   minimum results. It's never acceptable to return zero results to a
+   user — that's a product failure."
+
+
+--------------------------------------------------------------------------------
+1.9 ACHIEVEMENTS & RESEARCH (from resume)
+--------------------------------------------------------------------------------
+
+Q: Tell me about your published patent.
+A: "I co-invented a transfer learning-based detection system for early
+   diagnosis of Autism Spectrum Disorder using MRI neuroimaging. We used
+   pre-trained deep learning models and fine-tuned them on brain MRI
+   scans to classify ASD vs neurotypical subjects. It was awarded as
+   an institutional research grant of Rs. 20,000 and published as a
+   patent. This was during my time at VIT — it taught me about working
+   with large datasets, model training pipelines, and the research
+   process."
+
+Q: What did you learn from the research that applies to engineering?
+A: "Transfer learning is conceptually similar to what we do with LLMs —
+   take a pre-trained model and adapt it for a specific task. The
+   experience with data pipelines and model evaluation metrics directly
+   informed how I approach AI integration in production systems. Also,
+   research teaches you to be rigorous about measuring results, which
+   is why I track extraction accuracy metrics in ProceSync."
+
+Q: Tell me about your LeetCode rating.
+A: "I have a rating of 1703, which puts me around the top 12% globally.
+   I'm strongest in arrays, hash maps, two pointers, and binary search.
+   Currently working on strengthening trees, graphs, and DP."
+
+Q: Indian Air Force Reservation Scholarship?
+A: "I received the Indian Air Force Benevolent Association Scholarship
+   during 2022-2024, which is awarded to dependents of Air Force
+   personnel based on academic merit."
+
+--------------------------------------------------------------------------------
+1.10 REDIS CACHING LAYER (across all projects)
+--------------------------------------------------------------------------------
+
+Q: What's your overall caching strategy?
+A: "Cache-aside pattern everywhere. The application checks Redis first,
+   on miss fetches from the database, stores in cache with TTL, and
+   returns. For ProceSync, we cache templates, extraction configs,
+   validation templates, tenant settings, and session data — all with
+   24-hour TTL since this data changes rarely.
+
+   For ApplySurge, Redis serves multiple purposes — result backend for
+   Celery tasks, session/cookie storage with encryption, exclusive
+   session locks, real-time pub/sub for notifications, and the sliding
+   window rate limiter using sorted sets."
+
+Q: How do you handle cache consistency?
+A: "Active invalidation on writes. When a template is updated, we
+   immediately invalidate the old cache entry and warm the new one.
+   Pattern-based deletion with SCAN handles bulk invalidation — for
+   example, clearing all caches for a specific tenant. We never use
+   the KEYS command because it blocks Redis on large datasets."
+
+
+================================================================================
+PART 2: SYSTEM DESIGN
+================================================================================
+
+At your experience level, interviewers expect:
+- Clarify requirements (functional + non-functional)
+- Draw a high-level block diagram
+- Pick databases with justification
+- Discuss one component in depth
+- Talk about trade-offs
+NOT expected: back-of-envelope calculations or deep capacity planning
+
+--------------------------------------------------------------------------------
+Q1: Design a Document Processing Pipeline (from your experience)
+--------------------------------------------------------------------------------
+A: Requirements: Upload PDFs, extract data via AI, validate, export.
+
+   Components:
+   - API Gateway: upload endpoint, authentication, rate limiting
+   - Message Queue (Kafka): decouple upload from processing, enable
+     async pipeline
+   - Extraction Service: calls LLM APIs, returns structured data
+   - Validation Service: runs rule engine against extracted data
+   - Storage: Object storage (S3/GCS) for PDFs, MongoDB for extracted
+     data (flexible schema), Redis for caching config/templates
+   - Real-time updates: WebSocket/SSE for status updates to frontend
+
+   Key decisions:
+   - Why Kafka over RabbitMQ? Need ordered processing, replay capability,
+     and multiple consumers reading the same events.
+   - Why MongoDB? Document schema varies per template — flexible schema
+     beats rigid SQL tables for extracted data.
+   - Concurrency: Semaphore-based limiting to respect LLM API rate limits.
+
+   Scale considerations:
+   - Horizontal scaling: add more extraction service instances
+   - Rate limiting at the API gateway and per LLM provider
+   - Dead letter queue for failed extractions
+
+--------------------------------------------------------------------------------
+Q2: Design a URL Shortener (classic question)
+--------------------------------------------------------------------------------
+A: Requirements: Shorten URLs, redirect, basic analytics.
+
+   Components:
+   - API: POST /shorten (returns short URL), GET /{code} (302 redirect)
+   - Hash generation: Base62 encode an auto-increment ID, or hash the URL
+     and take first 6-7 chars. Handle collisions by retrying.
+   - Storage: SQL for URL mappings (short_code as primary key, original_url,
+     created_at, click_count)
+   - Cache: Redis for hot URLs — most URLs are accessed heavily right after
+     creation, then traffic drops off
+   - Analytics: Async writes to analytics table via message queue
+
+   Scale considerations:
+   - Read-heavy (100:1 read:write ratio) — cache makes this easy
+   - 301 (permanent) vs 302 (temporary) redirect: 301 means browsers
+     cache it and skip your server entirely — good for traffic, bad
+     for analytics. Use 302 if you need click tracking.
+   - 6-char Base62 = 56 billion unique codes — plenty for most use cases
+
+--------------------------------------------------------------------------------
+Q3: Design a Chat System (from your EventZity experience)
+--------------------------------------------------------------------------------
+A: Requirements: 1:1 messaging, typing indicators, read receipts, online status.
+
+   Components:
+   - WebSocket server for real-time bidirectional communication
+   - Room-based architecture: user rooms (notifications) + conversation
+     rooms (messages)
+   - Message storage: PostgreSQL (conversations + messages tables)
+   - Presence: Redis for online/offline status with TTL
+   - Auth: Token-based WebSocket authentication
+
+   Message flow:
+   1. Client sends message via WebSocket
+   2. Server persists to DB
+   3. Broadcasts to conversation room
+   4. If recipient offline: store and send push notification
+
+   Typing indicators: client emits typing event, server broadcasts to
+   room, auto-timeout after 3 seconds.
+
+   Scale considerations:
+   - Sticky sessions or a pub/sub layer (Redis pub/sub) to handle
+     users connected to different WebSocket servers
+   - Message pagination for history loading
+   - Connection heartbeats to detect stale connections
+
+--------------------------------------------------------------------------------
+Q4: Design a Task Queue System (from ApplySurge experience)
+--------------------------------------------------------------------------------
+A: Requirements: Submit tasks, process async, retry on failure, track status.
+
+   Components:
+   - API: Submit task, get status, cancel task
+   - Message broker (RabbitMQ) with routing to dedicated queues
+   - Workers: Pull from queues, process, update status
+   - Result backend (Redis) for task results with TTL cleanup
+   - Dead Letter Queue for failed tasks after max retries
+
+   Key design decisions:
+   - Multiple queues by task type: CPU-bound vs I/O-bound tasks
+   - Concurrency limits per worker to prevent overload
+   - Exclusive locks for tasks that shouldn't run in parallel (e.g.,
+     per-user sessions)
+   - Retry with exponential backoff: 60s -> 120s -> 240s -> fail to DLQ
+   - Scheduled jobs via cron-like scheduler
+
+--------------------------------------------------------------------------------
+Q5: Design a Notification Service
+--------------------------------------------------------------------------------
+A: Requirements: Multi-channel (email, push, in-app), templates, throttling.
+
+   Components:
+   - API: Send notification, get user notifications, mark as read
+   - Queue: Separate topics per channel (email, push, in-app)
+   - Template engine for dynamic content
+   - Channel adapters: SendGrid (email), Firebase (push), WebSocket (in-app)
+   - User preferences: per-channel opt-out settings
+   - Rate limiting: per-user throttling to prevent spam
+
+   Key considerations:
+   - At-least-once delivery — duplicate detection on the consumer side
+   - Priority levels for urgent vs marketing notifications
+   - Retry with backoff for failed deliveries
+   - Batching for high-volume scenarios
+
+--------------------------------------------------------------------------------
+Q6: Design a Rate Limiter
+--------------------------------------------------------------------------------
+A: Algorithms:
+   - Token Bucket: Bucket fills at rate R, each request consumes a token.
+     Allows bursts up to bucket size. Most commonly used.
+   - Sliding Window Log: Store timestamp of each request, count requests
+     in the window. Accurate but memory-intensive.
+   - Sliding Window Counter: Approximation combining fixed windows.
+     Memory-efficient and accurate enough.
+   - Fixed Window: Count per fixed time interval. Simple but has a
+     boundary problem (2x burst at window edges).
+
+   Implementation:
+   - Redis with INCR + EXPIRE for distributed rate limiting
+   - Each API gateway instance checks shared Redis state
+   - Response: HTTP 429 Too Many Requests with Retry-After header
+   - Different limits per API key/user/endpoint
+
+--------------------------------------------------------------------------------
+Q7: Design a Leaderboard
+--------------------------------------------------------------------------------
+A: Use Redis Sorted Sets — purpose-built for this.
+   - ZADD to insert/update scores: O(log N)
+   - ZREVRANK to get user's rank: O(log N)
+   - ZREVRANGE to get top N: O(log N + M)
+
+   Real-time: Score changes trigger ZADD, rank updates are instant.
+   Pagination: ZREVRANGE with offset parameter.
+   History: Periodic snapshots to a relational database.
+   Multiple leaderboards: separate sorted sets per time period
+   (daily, weekly, all-time).
+
+--------------------------------------------------------------------------------
+Q8: CAP Theorem — how does it apply to your stack?
+--------------------------------------------------------------------------------
+A: Consistency, Availability, Partition tolerance — you can only guarantee
+   two out of three in a distributed system.
+
+   - MongoDB (default): CP — consistent reads from primary, may lose
+     availability during primary election
+   - Redis: AP — available and partition-tolerant, eventual consistency
+     in cluster mode
+   - PostgreSQL: CA — strong consistency and availability, but doesn't
+     handle network partitions natively (single node)
+   - Kafka: CP — consistent writes with acks=all, may be unavailable
+     if not enough replicas are in sync
+
+   "In practice, it's a spectrum, not a binary choice. You configure the
+   trade-off — like MongoDB read preference or Kafka acks level."
+
+
+================================================================================
+PART 3: CS FUNDAMENTALS
+================================================================================
+
+--------------------------------------------------------------------------------
+3.1 OPERATING SYSTEMS
+--------------------------------------------------------------------------------
+
+Q: Process vs Thread?
+A: Process has its own memory space — heap, stack, everything isolated.
+   Creating a process is heavy, but crashes don't affect other processes.
+   Communication between processes needs IPC mechanisms.
+
+   Thread shares memory within its parent process — same heap, but each
+   thread has its own stack. Lighter and faster to create. But a crash
+   in one thread can take down the entire process.
+
+   When to use which: Threads for I/O-bound tasks within an application.
+   Processes for CPU-bound parallelism or when you need isolation.
+
+Q: What is a deadlock? 4 necessary conditions?
+A: Deadlock is when two or more processes are stuck waiting for each other
+   forever. All 4 conditions must hold simultaneously:
+   1. Mutual Exclusion — resource can only be held by one process
+   2. Hold and Wait — process holds one resource while waiting for another
+   3. No Preemption — can't forcibly take a resource from a holder
+   4. Circular Wait — A waits for B, B waits for A
+
+   Prevention: break any one condition. Most practical: impose a resource
+   ordering to break circular wait. Banker's algorithm for avoidance.
+
+Q: What is virtual memory?
+A: An abstraction that gives each process the illusion of having its own
+   large, contiguous address space. Uses disk as extension of RAM.
+   Implemented via paging — memory divided into fixed-size pages (4KB
+   typically). A page table maps virtual addresses to physical addresses.
+   The TLB (Translation Lookaside Buffer) caches recent translations
+   for performance.
+
+Q: Explain page faults.
+A: When a process accesses a page that's not currently in RAM:
+   1. CPU raises a page fault interrupt
+   2. OS finds the page on disk (swap space)
+   3. Loads it into a free physical frame (may evict another page using
+      LRU, FIFO, or Clock algorithm)
+   4. Updates the page table mapping
+   5. Resumes the instruction
+
+   Minor page fault: page is in memory but not mapped. Major page fault:
+   page must be loaded from disk — much slower.
+
+Q: What is a context switch? Why is it expensive?
+A: Saving the entire state (registers, program counter, stack pointer,
+   page table) of the current process and loading another's.
+
+   Expensive because:
+   - Register save/restore
+   - TLB flush — cached address translations become invalid
+   - CPU pipeline flush
+   - Cache cold start — L1/L2 cache misses after the switch
+
+   Thread switches within the same process are cheaper because they
+   share the same address space — no TLB flush needed.
+
+Q: Mutex vs Semaphore?
+A: Mutex is a binary lock with ownership — only the thread that locked
+   it can unlock it. Used for mutual exclusion.
+
+   Semaphore is a counter — can allow N concurrent accesses (counting
+   semaphore). No ownership — any thread can signal. Binary semaphore
+   (count=1) is similar to mutex but without ownership.
+
+   In my projects, I use asyncio.Semaphore for concurrency limiting —
+   capping concurrent API calls to 200.
+
+Q: CPU Scheduling Algorithms?
+A: - FCFS: Simple but has convoy effect — short jobs stuck behind long ones
+   - SJF: Optimal average wait time, but impractical — you'd need to
+     predict burst times. Long jobs can starve.
+   - Round Robin: Time quantum, fair for interactive systems. Too small
+     quantum = context switch overhead, too large = becomes FCFS.
+   - Priority Scheduling: Higher priority runs first. Starvation solved
+     by aging — gradually increase priority of waiting processes.
+   - MLFQ: Multiple queues with different priorities and time slices.
+     Real-world schedulers (Linux CFS) use variants of this.
+
+Q: What is thrashing?
+A: When the system spends more time swapping pages in and out of memory
+   than actually executing processes. Happens when too many processes
+   compete for limited RAM — each causes page faults, evicting pages
+   other processes need. Solution: reduce the number of active processes,
+   or use the working set model to ensure each process has enough frames.
+
+Q: User mode vs Kernel mode?
+A: User mode has restricted access — can't directly access hardware or
+   other processes' memory. Kernel mode has full access to everything.
+
+   System calls (fork, read, write, open) transition from user mode
+   to kernel mode via a trap/interrupt. A mode bit in the CPU status
+   register controls which mode is active. This separation is what
+   prevents user programs from crashing the OS.
+
+Q: Internal vs External fragmentation?
+A: Internal: wasted space within an allocated block. Process needs 30KB,
+   gets a 32KB partition — 2KB wasted. Happens with fixed-size allocation.
+
+   External: total free memory is sufficient but scattered in small
+   non-contiguous chunks. No single block is big enough. Happens with
+   variable-size allocation.
+
+   Solutions: Compaction (move processes to consolidate free space),
+   Paging (eliminates external fragmentation entirely by using fixed
+   pages).
+
+Q: What are zombie and orphan processes?
+A: Zombie: a process that has finished execution but its parent hasn't
+   read its exit status yet (via wait()). Takes up a process table entry
+   but no resources. Too many zombies can exhaust the process table.
+
+   Orphan: a process whose parent has terminated. The init/systemd process
+   adopts orphans and cleans them up. Not as problematic as zombies.
+
+Q: IPC mechanisms?
+A: - Pipes: unidirectional byte stream between parent-child processes
+   - Named Pipes (FIFOs): like pipes but with a filesystem name,
+     usable between unrelated processes
+   - Message Queues: structured messages with types and priorities
+   - Shared Memory: fastest — processes map the same memory region.
+     Needs synchronization (semaphores/mutexes)
+   - Sockets: for network IPC, works across machines
+   - Signals: async notifications (SIGKILL, SIGTERM, etc.)
+
+--------------------------------------------------------------------------------
+3.2 DBMS
+--------------------------------------------------------------------------------
+
+Q: What are ACID properties?
+A: Atomicity: Transaction is all-or-nothing. If any step fails, everything
+   rolls back. No partial updates.
+
+   Consistency: Transaction brings the database from one valid state to
+   another. All constraints (foreign keys, unique, check) satisfied.
+
+   Isolation: Concurrent transactions don't interfere with each other.
+   Each sees a consistent snapshot as if it were running alone.
+
+   Durability: Once committed, the data survives even if the system
+   crashes. Typically implemented via Write-Ahead Logging (WAL).
+
+Q: Explain normalization (1NF through BCNF).
+A: 1NF: All values are atomic — no arrays or repeating groups in columns.
+
+   2NF: 1NF + no partial dependencies. Every non-key column depends on
+   the ENTIRE primary key, not just part of it (relevant for composite
+   keys).
+
+   3NF: 2NF + no transitive dependencies. Non-key columns don't depend
+   on other non-key columns.
+
+   BCNF: Stricter than 3NF. Every determinant is a candidate key. Handles
+   edge cases 3NF misses.
+
+   Goal: reduce redundancy and prevent update/insert/delete anomalies.
+
+Q: When would you denormalize?
+A: Read-heavy workloads like analytics dashboards, reducing complex JOINs,
+   when write frequency is low compared to reads. Trade-off: faster reads
+   but slower writes, potential inconsistency, more storage.
+
+   In my projects, MongoDB collections are inherently denormalized —
+   we embed extracted data as subdocuments to avoid JOINs entirely.
+   Makes sense when data is always accessed together.
+
+Q: B-Tree vs Hash Index?
+A: B-Tree: Balanced tree. Supports both equality AND range queries.
+   O(log n) lookup. Default in PostgreSQL and MongoDB. Data is sorted,
+   so good for ORDER BY, BETWEEN, and range scans.
+
+   Hash: O(1) for exact equality lookups. No range support at all.
+   Faster for point queries but very limited. Used in hash partitioning,
+   in-memory structures like Redis.
+
+Q: Transaction Isolation Levels?
+A: From weakest to strongest:
+
+   Read Uncommitted: Can see uncommitted changes (dirty reads). Fastest.
+   Read Committed: Only sees committed data. Default in PostgreSQL.
+   Repeatable Read: Same query returns same results within a transaction.
+     Default in MySQL InnoDB.
+   Serializable: Full isolation, as if transactions ran one-by-one.
+     Slowest, uses locks or snapshot isolation.
+
+   Each level prevents more anomalies:
+   - Read Committed prevents dirty reads
+   - Repeatable Read additionally prevents non-repeatable reads
+   - Serializable additionally prevents phantom reads
+
+Q: SQL vs NoSQL — when to use which?
+A: SQL (PostgreSQL): When you need structured data with relationships,
+   complex queries with JOINs, ACID transactions, strong consistency.
+   I used PostgreSQL for EventZity — 26+ tables with relationships.
+
+   NoSQL (MongoDB): When schema varies across records, you need
+   horizontal scaling, high write throughput, or nested documents.
+   I used MongoDB for document extraction because each template extracts
+   different fields — flexible schema was essential.
+
+   Redis (Key-Value): Caching, sessions, real-time features, leaderboards.
+
+   "The choice depends on the data model and access patterns, not
+   personal preference."
+
+Q: What is sharding?
+A: Horizontal partitioning of data across multiple database instances.
+
+   Strategies:
+   - Range-based: Split by value range (users 1-1M on shard 1). Simple
+     but can create hotspots if distribution is uneven.
+   - Hash-based: Hash the key to determine the shard. Even distribution
+     but can't do range queries across shards efficiently.
+   - Directory-based: Lookup table maps keys to shards. Flexible but the
+     lookup table becomes a bottleneck and single point of failure.
+
+   Challenges: Cross-shard queries are expensive, rebalancing is complex,
+   and maintaining consistency across shards is hard.
+
+Q: Clustered vs Non-clustered Index?
+A: Clustered: Data rows are physically sorted by the index key on disk.
+   Only ONE per table. Range queries are very fast because data is
+   contiguous. In PostgreSQL, the primary key effectively acts as this.
+
+   Non-clustered: Separate data structure with pointers to the actual
+   rows. You can have multiple. Lookup requires an extra hop — go to
+   index, find pointer, follow pointer to data.
+
+Q: Optimistic vs Pessimistic Locking?
+A: Pessimistic: Lock the resource when you start working on it. Others
+   wait. Guarantees no conflicts but reduces concurrency. Use when
+   conflicts are likely.
+
+   Optimistic: Don't lock — just check at commit time if anyone else
+   modified the data (via version number or timestamp). If conflict,
+   retry. Better concurrency but more work on conflicts. Use when
+   conflicts are rare.
+
+Q: What is WAL (Write-Ahead Logging)?
+A: Before modifying actual data files, write the change to a log first.
+   If the system crashes mid-write, replay the log to recover. This is
+   how databases guarantee durability. PostgreSQL uses WAL for both
+   crash recovery and streaming replication (send WAL segments to
+   replicas).
+
+Q: Explain EXPLAIN ANALYZE.
+A: Shows the query execution plan with actual runtime statistics.
+   Key things to look for:
+   - Sequential Scan on a large table = probably needs an index
+   - Big gap between estimated vs actual rows = stale statistics
+   - Nested Loop with Sequential Scan = potential N+1 problem
+   - Sort on large dataset without index = expensive
+
+   Always run ANALYZE to update statistics after bulk operations.
+
+--------------------------------------------------------------------------------
+3.3 NETWORKING
+--------------------------------------------------------------------------------
+
+Q: What happens when you type a URL in the browser? (THE classic question)
+A: 1. Browser checks caches: browser cache, OS cache, router, ISP
+   2. DNS resolution: recursive query through root -> TLD -> authoritative
+      nameservers to get the IP address
+   3. TCP connection: 3-way handshake (SYN, SYN-ACK, ACK)
+   4. TLS handshake if HTTPS: certificate exchange, key agreement
+   5. HTTP request: GET /path with headers
+   6. Server processes the request, returns HTTP response
+   7. Browser parses HTML, discovers CSS/JS/image resources
+   8. Fetches additional resources (may use HTTP/2 multiplexing)
+   9. Renders: DOM tree -> CSSOM -> Render tree -> Layout -> Paint
+
+Q: TCP vs UDP?
+A: TCP: Connection-oriented, reliable, ordered delivery, flow control,
+   congestion control. 3-way handshake setup. Used for HTTP, SSH,
+   database connections — anything where you can't afford data loss.
+
+   UDP: Connectionless, no guarantees, no ordering, no handshake.
+   Faster, lower overhead. Used for DNS, video streaming, gaming,
+   VoIP — where speed matters more than perfect delivery.
+
+Q: Explain the TCP 3-way handshake.
+A: 1. Client sends SYN with a sequence number
+   2. Server responds with SYN-ACK, acknowledging client's sequence
+      and sending its own
+   3. Client sends ACK, acknowledging server's sequence
+
+   Connection is now established. Both sides agree on sequence numbers
+   for ordering.
+
+   Teardown is 4-way: FIN -> ACK -> FIN -> ACK (each side closes
+   independently).
+
+Q: HTTP/1.1 vs HTTP/2 vs HTTP/3?
+A: HTTP/1.1: One request per TCP connection (or pipelining, rarely used).
+   Head-of-line blocking — slow response blocks subsequent ones.
+   Workaround: browsers open 6 parallel connections.
+
+   HTTP/2: Multiplexing — multiple requests over single TCP connection.
+   Header compression (HPACK). Server push. Binary protocol instead
+   of text. Still suffers from TCP-level head-of-line blocking.
+
+   HTTP/3: Uses QUIC (over UDP instead of TCP). Eliminates TCP-level
+   head-of-line blocking. Built-in encryption. Faster connection
+   setup (0-RTT). Still rolling out widely.
+
+Q: REST vs GraphQL?
+A: REST: Resource-based URLs, fixed response shapes, multiple endpoints.
+   Can over-fetch (get all fields when you need 3) or under-fetch
+   (need multiple requests). Easy to cache via HTTP caching.
+
+   GraphQL: Single endpoint, client specifies exact fields needed.
+   Reduces round trips, no over-fetching. Harder to cache, more complex
+   server. Better for mobile apps with bandwidth constraints.
+
+   All my APIs are REST — simpler, well-understood, good tooling.
+
+Q: What are WebSockets?
+A: Full-duplex bidirectional communication over a single TCP connection.
+   Starts as an HTTP upgrade request (101 Switching Protocols). Once
+   established, either side can send messages without waiting.
+
+   Used for real-time features: chat, live updates, gaming. I use
+   Socket.IO in my projects, which wraps WebSocket with fallback to
+   HTTP long-polling if WebSocket isn't available.
+
+Q: How does DNS work?
+A: Hierarchical resolution:
+   1. Browser/OS cache check
+   2. Recursive resolver (usually ISP's) queries root nameserver
+   3. Root returns TLD nameserver (.com, .org, .in)
+   4. TLD returns authoritative nameserver for the domain
+   5. Authoritative nameserver returns the actual IP address
+
+   Caching at every level with TTL. This is why DNS changes take time
+   to propagate — caches hold stale entries until TTL expires.
+
+Q: What is a CDN?
+A: Content Delivery Network. Caches static content (images, CSS, JS) at
+   edge servers geographically close to users. Reduces latency, offloads
+   the origin server, improves availability. CloudFront, Cloudflare are
+   examples. Dynamic content usually still goes to the origin.
+
+Q: Load Balancing algorithms?
+A: - Round Robin: distribute equally in rotation
+   - Weighted Round Robin: stronger servers get more traffic
+   - Least Connections: route to server with fewest active connections
+   - IP Hash: same client always goes to same server (sticky sessions)
+   - Consistent Hashing: minimizes redistribution when servers
+     are added/removed
+
+   L4 (transport layer): fast, routes based on IP/port.
+   L7 (application layer): smarter, can route based on URL path,
+   headers, cookies.
+
+Q: What is CORS?
+A: Cross-Origin Resource Sharing. Browser security mechanism that
+   prevents scripts on one domain from making requests to another domain.
+   Server must explicitly allow it via Access-Control-Allow-Origin headers.
+
+   For non-simple requests (PUT, DELETE, custom headers), the browser
+   sends a preflight OPTIONS request first. I configure CORS in FastAPI
+   and Express middleware.
+
+Q: Cookies vs Sessions vs JWT?
+A: Cookies: Small data stored in browser, sent with every request. Can
+   be HttpOnly (no JS access), Secure (HTTPS only), SameSite.
+
+   Sessions: Server-side state storage. Cookie holds just the session ID,
+   actual data is on the server. More secure but requires server memory
+   or a session store (Redis).
+
+   JWT: Self-contained token with encoded claims. Stateless — server
+   doesn't need to store anything. But can't be easily revoked (no
+   server-side invalidation without a blocklist). Good for distributed
+   systems where sharing session state across servers is hard.
+
+Q: Forward proxy vs Reverse proxy?
+A: Forward proxy: Sits in front of CLIENTS. Client sends requests through
+   the proxy. Used for anonymity, filtering, caching. Example: corporate
+   proxy servers.
+
+   Reverse proxy: Sits in front of SERVERS. Receives client requests and
+   forwards to appropriate backend server. Used for load balancing, SSL
+   termination, caching. Example: Nginx, HAProxy.
+
+Q: What are HTTP status codes? (common ones)
+A: 200 OK — success
+   201 Created — resource created (POST)
+   301 Moved Permanently — permanent redirect (cacheable)
+   302 Found — temporary redirect (not cached)
+   400 Bad Request — client error, invalid input
+   401 Unauthorized — authentication required
+   403 Forbidden — authenticated but not authorized
+   404 Not Found — resource doesn't exist
+   429 Too Many Requests — rate limited
+   500 Internal Server Error — server-side failure
+   502 Bad Gateway — upstream server returned invalid response
+   503 Service Unavailable — server overloaded or in maintenance
+
+--------------------------------------------------------------------------------
+3.4 OOP
+--------------------------------------------------------------------------------
+
+Q: 4 pillars of OOP?
+A: Encapsulation: Bundle data and methods together, hide internal state
+   via access modifiers. Only expose what's necessary.
+
+   Abstraction: Expose a clean interface, hide implementation details.
+   Users of a class don't need to know how it works internally.
+
+   Inheritance: Code reuse via parent-child relationships. "is-a"
+   relationship. Dog is an Animal.
+
+   Polymorphism: Same interface, different behavior. Method overriding
+   (runtime — subclass provides its own implementation) and overloading
+   (compile-time — same method name, different parameters).
+
+Q: SOLID principles?
+A: S — Single Responsibility: A class should have only one reason to
+   change. One job per class.
+
+   O — Open/Closed: Open for extension, closed for modification. Add
+   new behavior without changing existing code.
+
+   L — Liskov Substitution: Subclasses should be usable wherever the
+   parent class is expected, without breaking behavior.
+
+   I — Interface Segregation: Many small, focused interfaces are better
+   than one large, general-purpose interface.
+
+   D — Dependency Inversion: Depend on abstractions (interfaces), not
+   concrete implementations. High-level modules shouldn't depend on
+   low-level modules.
+
+Q: Common Design Patterns?
+A: Singleton: One instance globally. Use for DB connection pools, loggers,
+   config objects. Drawback: hidden global state, hard to test.
+
+   Factory: Creates objects without exposing creation logic. Client asks
+   for an interface, factory decides the concrete class. Decouples
+   creation from usage.
+
+   Observer: Publisher maintains list of subscribers, notifies them on
+   state change. Kafka is essentially pub/sub — producers publish,
+   consumers observe.
+
+   Strategy: Define a family of algorithms, encapsulate each one, make
+   them interchangeable. The algorithm varies independently from the
+   client. Example: different rate limiting strategies.
+
+   Builder: Construct complex objects step-by-step. Useful when a
+   constructor would have too many parameters.
+
+Q: Inheritance vs Composition?
+A: Inheritance: "is-a" relationship. Tight coupling — changing the parent
+   can break children. Fragile base class problem.
+
+   Composition: "has-a" relationship. More flexible — swap components at
+   runtime. Loose coupling.
+
+   "Favor composition over inheritance." In my workflow engine, each node
+   type is a separate class composed into the executor, not inheriting
+   from a deep hierarchy.
+
+Q: What is Dependency Injection?
+A: Instead of a class creating its own dependencies, they're provided
+   from the outside — usually via the constructor.
+
+   Benefits: easier testing (inject mocks), loose coupling (swap
+   implementations), clearer dependencies (explicit in constructor).
+
+   In FastAPI, the Depends() system injects database sessions, auth
+   objects, and configs into route handlers automatically.
+
+
+================================================================================
+PART 4: TECHNOLOGY-SPECIFIC
+================================================================================
+
+--------------------------------------------------------------------------------
+4.1 APACHE KAFKA
+--------------------------------------------------------------------------------
+
+Q: What is Kafka?
+A: Distributed event streaming platform. Core concepts:
+   - Producers publish messages to topics
+   - Consumers read messages from topics
+   - Brokers are the Kafka servers that store data
+   - Topics are logical channels, split into partitions
+   - Partitions enable parallelism and ordering within a partition
+   - Consumer Groups coordinate consumers for parallel processing
+
+Q: How do partitions work?
+A: Topics are split into partitions for parallelism. Each partition is
+   an ordered, immutable, append-only log. Messages have sequential
+   offsets. A partition key (hash-based) determines which partition a
+   message goes to. IMPORTANT: Ordering is guaranteed only within a
+   single partition, not across partitions. More partitions = more
+   parallelism, up to one consumer per partition.
+
+Q: What are offsets?
+A: A sequential ID assigned to each message within a partition. Consumers
+   track their position via committed offsets (stored in a special
+   __consumer_offsets topic). Auto-commit commits periodically, manual
+   commit gives you control. If a consumer crashes after processing but
+   before committing — the message gets reprocessed.
+
+Q: Exactly-once semantics?
+A: Three delivery levels:
+   - At-most-once: Send and forget. May lose messages.
+   - At-least-once: Ack after receive. May duplicate. Most common.
+   - Exactly-once: Idempotent producer (assigns sequence numbers to
+     detect duplicates) + transactional API. Consumer reads only
+     committed messages. Needs Kafka Streams or manual transaction
+     management.
+
+Q: What happens during rebalancing?
+A: Triggered when a consumer joins, leaves, or is considered dead.
+   The group coordinator reassigns partitions. During rebalance,
+   consumption PAUSES for the entire group.
+   Two strategies: Eager (stop all consumers, reassign everything) vs
+   Cooperative/Incremental (only reassign affected partitions — much
+   less disruptive).
+
+Q: What is log compaction?
+A: A retention policy that keeps only the latest value per key (instead
+   of keeping all messages for a time period). Useful for changelog
+   topics where you only care about current state. A background thread
+   compacts old segments, removing superseded entries.
+
+Q: How to handle consumer lag?
+A: Monitor via consumer group lag metrics. Solutions:
+   1. Add more consumers (up to the number of partitions)
+   2. Increase partition count (careful — can't decrease)
+   3. Optimize processing logic (batch processing, async I/O)
+   4. Increase consumer fetch batch sizes
+   5. Find and fix the bottleneck in the slow consumer
+
+--------------------------------------------------------------------------------
+4.2 REDIS
+--------------------------------------------------------------------------------
+
+Q: Why is Redis so fast?
+A: - In-memory storage (no disk I/O for reads)
+   - Single-threaded command execution (no lock contention)
+   - Optimized C data structures (skip lists, hash tables)
+   - I/O multiplexing (epoll on Linux, kqueue on macOS)
+   - Simple wire protocol (RESP)
+   Redis 6+ uses I/O threads for network operations, but command
+   execution remains single-threaded.
+
+Q: Data structures in Redis?
+A: Strings, Lists (linked list), Sets (unique unordered), Sorted Sets
+   (scored members — great for leaderboards), Hashes (field-value maps),
+   Bitmaps, HyperLogLog (cardinality estimation), Streams (append-only
+   log — like a mini Kafka), Geospatial indexes.
+
+Q: RDB vs AOF persistence?
+A: RDB: Point-in-time snapshots. Compact file, fast to restore. But
+   potential data loss between snapshots.
+
+   AOF: Logs every write command. Safer — fsync options: every command,
+   every second, or let the OS decide. Larger files, slower recovery.
+   Can be rewritten/compacted periodically.
+
+   Best practice: Use both. RDB for backups, AOF for durability.
+
+Q: Caching strategies?
+A: Cache-aside (most common): App checks cache first, on miss fetches
+   from DB and stores in cache. I use this approach.
+
+   Write-through: Write to cache AND DB simultaneously. Always consistent
+   but slower writes.
+
+   Write-behind: Write to cache only, async persist to DB later. Very
+   fast writes but risk of data loss.
+
+   Read-through: Cache itself fetches from DB on miss. Cleaner code but
+   less control.
+
+Q: Eviction policies?
+A: What Redis does when memory is full:
+   - noeviction: return errors on new writes
+   - allkeys-lru: evict least recently used across all keys
+   - volatile-lru: LRU only among keys with a TTL set
+   - allkeys-lfu: evict least frequently used
+   - volatile-ttl: evict keys closest to expiration
+   - allkeys-random: random eviction
+
+Q: How to implement distributed locks?
+A: Simple: SET key value NX EX timeout — atomic set-if-not-exists with
+   expiry. I use this in ApplySurge for exclusive user sessions.
+
+   For stronger guarantees: Redlock algorithm — acquire lock on a
+   majority of N independent Redis nodes. But it's controversial due
+   to clock skew issues. For truly strict distributed locking, consider
+   ZooKeeper or etcd.
+
+Q: What is cache stampede? How to prevent?
+A: When a popular cache key expires, hundreds of concurrent requests all
+   miss the cache and hit the database simultaneously.
+
+   Solutions:
+   1. Mutex lock: only one request fetches, others wait for cache refill
+   2. Probabilistic early expiration: refresh slightly before actual expiry
+   3. Background refresh: a cron job refreshes popular keys
+   4. Serve stale data while refreshing in the background
+
+--------------------------------------------------------------------------------
+4.3 MONGODB
+--------------------------------------------------------------------------------
+
+Q: What is the aggregation pipeline?
+A: A sequence of stages that process documents:
+   $match (filter), $group (aggregate), $project (reshape fields),
+   $sort, $limit, $lookup (left outer join), $unwind (flatten arrays),
+   $addFields, $facet (run multiple pipelines in parallel).
+
+   Each stage transforms documents and passes them to the next. MongoDB
+   optimizes the pipeline — for example, pushing $match before $sort.
+
+Q: Embedding vs Referencing?
+A: Embedding: Store related data as nested subdocuments. Best when data
+   is always accessed together, need atomic updates, and the nested
+   data doesn't grow unboundedly.
+
+   Referencing: Store a reference (like a foreign key) and look up
+   separately. Better when related data is accessed independently,
+   shared across documents, or very large.
+
+   In my system, extracted data is embedded within each document record
+   because you always need it together. But template definitions are
+   referenced by ID because they're shared across many documents.
+
+Q: How does MongoDB handle flexible schemas?
+A: Documents in the same collection don't need to have the same structure.
+   This is powerful for my use case — each template extracts different
+   fields, so the extracted data has different shapes per document type.
+   You can optionally enforce schema validation at the collection level
+   using JSON Schema if you want guardrails.
+
+Q: What indexes does MongoDB support?
+A: Single field, compound (multiple fields), multikey (arrays), text
+   (full-text search), geospatial (2d, 2dsphere), hashed (for sharding),
+   TTL (auto-delete after time), and wildcard indexes.
+
+   Index selection matters for performance — use explain() to verify
+   your queries are using indexes, not doing collection scans.
+
+Q: Explain replica sets.
+A: A group of MongoDB instances with the same data. One primary handles
+   all writes, secondaries replicate and handle reads (if configured).
+   Automatic failover: if primary goes down, remaining nodes elect a
+   new primary (requires majority vote).
+
+   Write concern controls how many replicas must acknowledge a write.
+   Read preference controls where reads go — primary, secondary, nearest.
+
+Q: WiredTiger storage engine?
+A: Default since MongoDB 3.2. Key features:
+   - Document-level concurrency control (not collection-level locking)
+   - Compression: snappy (default), zlib, zstd
+   - Journaling for crash recovery (similar to WAL)
+   - Checkpointing every 60 seconds
+
+--------------------------------------------------------------------------------
+4.4 POSTGRESQL
+--------------------------------------------------------------------------------
+
+Q: What is MVCC?
+A: Multi-Version Concurrency Control. Each transaction sees a snapshot
+   of data at its start time. Writes create new row versions, old
+   versions are kept until they're no longer needed. This means readers
+   never block writers and vice versa. Old versions are cleaned up by
+   the VACUUM process.
+
+Q: What is WAL in PostgreSQL?
+A: Write-Ahead Logging. All changes are written to the log before the
+   actual data files. If the system crashes mid-write, it replays the
+   WAL to recover. Also used for streaming replication — WAL segments
+   are sent to replica servers.
+
+Q: PostgreSQL index types?
+A: - B-tree: Default. Equality + range. Most common.
+   - Hash: Equality only. Rarely used since B-tree is almost as fast.
+   - GIN: Generalized Inverted Index. For full-text search, JSONB, arrays.
+   - GiST: Generalized Search Tree. Geometric data, range types, and
+     pgvector similarity search.
+   - BRIN: Block Range Index. Very efficient for large sequential data
+     like time-series.
+
+   For my EventZity project, pgvector uses a GiST or IVFFlat index for
+   approximate nearest neighbor search on embedding columns.
+
+Q: What is VACUUM?
+A: Reclaims storage from dead rows left behind by MVCC updates/deletes.
+   Regular VACUUM marks space reusable within the table (doesn't shrink
+   the file). VACUUM FULL rewrites the entire table to reclaim disk space
+   but locks the table during the operation.
+
+   autovacuum runs automatically. Also critical for preventing transaction
+   ID wraparound — a catastrophic failure if vacuum doesn't run.
+
+Q: Connection pooling?
+A: PostgreSQL forks a new process per connection — expensive (~10MB each).
+   Connection poolers like PgBouncer sit between the app and database:
+   - Transaction mode: connection returned after each transaction (best
+     for most apps)
+   - Session mode: dedicated connection per client session
+
+   Dramatically reduces database resource usage for apps with many
+   short-lived queries.
+
+--------------------------------------------------------------------------------
+4.5 DOCKER
+--------------------------------------------------------------------------------
+
+Q: Containers vs VMs?
+A: Containers share the host OS kernel. Lightweight (MBs), fast startup
+   (milliseconds), less isolation.
+
+   VMs include a full guest OS on top of a hypervisor. Heavy (GBs),
+   slow startup (minutes), strong isolation.
+
+   Use containers for microservices and dev environments. VMs when you
+   need different OS or strict security isolation.
+
+Q: Images vs Containers?
+A: Image: Read-only template built from a Dockerfile. Composed of layers.
+   Shareable via registries (Docker Hub, ECR, GCR).
+
+   Container: Running instance of an image with a writable layer on top.
+   You can run multiple containers from the same image. Ephemeral by
+   default — data is lost when the container stops unless you use volumes.
+
+Q: What are Docker layers?
+A: Each Dockerfile instruction creates a layer. Layers are cached — if
+   the instruction and its context haven't changed, the cached layer is
+   reused. This is why you put frequently changing instructions (like
+   COPY . .) LAST and stable instructions (like installing dependencies)
+   FIRST. Minimizing layer count (combining RUN commands) also helps.
+
+Q: Multi-stage builds?
+A: Multiple FROM statements in one Dockerfile. Build in one stage with
+   all build tools and dev dependencies, then COPY only the necessary
+   artifacts to a minimal final stage.
+
+   Example: First stage uses the full Python image with all build tools.
+   Final stage uses python-slim with only production dependencies and
+   the built code. Dramatically reduces final image size.
+
+Q: CMD vs ENTRYPOINT?
+A: CMD: Default command, can be overridden when running the container.
+   ENTRYPOINT: Fixed command, arguments from docker run are appended.
+
+   Combining: ENTRYPOINT ["python"], CMD ["app.py"] — default runs
+   "python app.py", but user can override with "docker run img other.py".
+
+   Always use exec form (["cmd"]) over shell form ("cmd") to avoid
+   an extra shell process wrapping your app.
+
+Q: Docker Compose?
+A: Define and run multi-container applications. You specify all services,
+   networks, volumes, and environment variables in a docker-compose.yml.
+   docker-compose up spins everything up, down tears it down. Great for
+   local development with multiple services — API + database + cache +
+   workers all running together.
+
+Q: Docker networking?
+A: - Bridge (default): Containers on the same bridge network can
+     communicate by container name
+   - Host: Container shares the host's network — no port mapping needed
+   - None: No networking
+   - Overlay: Multi-host networking for Docker Swarm/Kubernetes
+
+   In Compose, services on the same network can reach each other by
+   service name as hostname.
+
+
+================================================================================
+PART 5: LANGUAGE-SPECIFIC
+================================================================================
+
+--------------------------------------------------------------------------------
+5.1 PYTHON
+--------------------------------------------------------------------------------
+
+Q: What is the GIL?
+A: Global Interpreter Lock in CPython. Only one thread can execute Python
+   bytecode at a time. It's there to protect reference counting (Python's
+   memory management).
+
+   Impact: Multi-threading doesn't help for CPU-bound tasks.
+   Solutions:
+   - multiprocessing for CPU parallelism (separate processes, no GIL)
+   - asyncio for I/O concurrency (my FastAPI services use this)
+   - Threading still helps for I/O-bound tasks because the GIL is
+     released during I/O operations
+
+Q: How does async/await work in Python?
+A: async def creates a coroutine. await suspends the coroutine and gives
+   control back to the event loop. The event loop runs other coroutines
+   while this one waits for I/O (network call, disk read).
+
+   It's single-threaded concurrency — one thread handles many operations
+   by not blocking. My FastAPI handlers are async, so one process can
+   handle hundreds of concurrent requests efficiently.
+
+Q: Explain decorators.
+A: Functions that wrap other functions to add behavior. The @decorator
+   syntax is sugar for func = decorator(func).
+
+   Example: a timing decorator wraps a function, records start time,
+   calls the function, prints elapsed time, returns the result.
+
+   Use functools.wraps to preserve the original function's name and
+   docstring. Common uses: logging, auth checks, rate limiting, Celery
+   task registration.
+
+Q: Generators vs Lists?
+A: List stores everything in memory upfront (eager evaluation).
+   Generator produces values one at a time using yield (lazy evaluation).
+
+   Generators are memory-efficient for large datasets — you process one
+   item at a time instead of loading everything. Use for: processing
+   large files line by line, infinite sequences, data pipelines.
+
+Q: Python memory management?
+A: Three mechanisms:
+   1. Reference counting: Each object tracks how many references point
+      to it. When count hits zero, it's deallocated immediately.
+   2. Cyclic garbage collector: Handles reference cycles (A points to B,
+      B points to A). Generational — checks new objects frequently, old
+      objects less often.
+   3. Private heap: Memory allocator with pooling for small objects
+      (<512 bytes) to avoid frequent system calls.
+
+Q: List vs Tuple?
+A: List: Mutable, slightly more memory, can append/modify. Use when
+   the collection might change.
+
+   Tuple: Immutable, hashable (can be a dictionary key), slightly faster,
+   less memory. Use for fixed data — function return values, dict keys,
+   constants.
+
+Q: How do dicts work internally?
+A: Hash table. Keys are hashed to determine position. Open addressing
+   for collision resolution. Since Python 3.7+, insertion order is
+   preserved. Average O(1) lookup. Resizes when roughly 2/3 full.
+
+Q: is vs ==?
+A: "is" checks identity — are these the exact same object in memory?
+   "==" checks equality — do these have the same value?
+
+   Gotcha: Python caches small integers (-5 to 256), so "256 is 256"
+   is True, but "257 is 257" might be False. Always use == for value
+   comparison. Only use "is" for None checks (x is None).
+
+Q: Context managers?
+A: Implements __enter__ and __exit__ methods. Guarantees cleanup even
+   if an exception occurs. Classic example: file handling — the file
+   is always closed, even if an error happens while reading.
+
+   You can create custom ones with the @contextmanager decorator from
+   contextlib — write a generator with a try/finally around the yield.
+
+Q: *args and **kwargs?
+A: *args collects positional arguments into a tuple.
+   **kwargs collects keyword arguments into a dictionary.
+
+   Used when you don't know how many arguments a function will receive.
+   Common in decorators, class inheritance, and wrapper functions.
+
+Q: Shallow vs Deep copy?
+A: Shallow copy: New outer object, but nested objects are still references
+   to the originals. Changes to nested objects affect both copies.
+
+   Deep copy: Recursively copies everything. Completely independent clone.
+
+   Matters for nested mutable structures. For flat structures, shallow
+   copy is fine and cheaper.
+
+--------------------------------------------------------------------------------
+5.2 JAVASCRIPT / TYPESCRIPT
+--------------------------------------------------------------------------------
+
+Q: Explain the Event Loop.
+A: JavaScript is single-threaded. The event loop handles async operations:
+
+   1. Call stack executes synchronous code
+   2. When async operations complete, callbacks go to task queues
+   3. Microtask queue (Promises, queueMicrotask) has priority
+   4. Macrotask queue (setTimeout, I/O callbacks) runs after microtasks
+
+   After each macrotask, the engine drains ALL microtasks before picking
+   the next macrotask. This is why Promises resolve before setTimeout(0).
+
+Q: What are Promises?
+A: An object representing the eventual completion or failure of an async
+   operation. States: pending -> fulfilled or rejected. Chainable with
+   .then() and .catch().
+
+   Key combinators:
+   - Promise.all: resolves when ALL resolve, rejects on first rejection
+   - Promise.allSettled: waits for all, returns status of each
+   - Promise.race: resolves/rejects with the first settled promise
+   - Promise.any: resolves with first fulfilled (ignores rejections)
+
+Q: Explain closures.
+A: A function that "remembers" variables from its enclosing scope, even
+   after that scope has returned.
+
+   Example: a counter function returns an inner function. The inner
+   function accesses and modifies the outer function's "count" variable.
+   Each call to counter() creates a new closure with its own count.
+
+   Use cases: data privacy, factory functions, React hooks, memoization.
+
+Q: How does 'this' work?
+A: Depends on how the function is called:
+   - In a method: 'this' is the object that owns the method
+   - Standalone function: 'this' is window (browser) or undefined (strict)
+   - Arrow function: 'this' is inherited from the enclosing scope
+   - With call/apply/bind: 'this' is explicitly set
+   - With 'new': 'this' is the new instance being created
+
+   Arrow functions are great when you want 'this' from the surrounding
+   context — callbacks, event handlers.
+
+Q: var vs let vs const?
+A: var: Function-scoped, hoisted and initialized as undefined. Can be
+   redeclared. Legacy — avoid using.
+
+   let: Block-scoped, in Temporal Dead Zone until declaration. Can't
+   redeclare. Use when you need to reassign.
+
+   const: Block-scoped, TDZ, must initialize, can't reassign the
+   reference. But object properties ARE still mutable. Use by default.
+
+Q: TypeScript Generics?
+A: Parameterized types for reusable, type-safe code. Instead of using
+   "any", you use a type parameter that the caller specifies.
+
+   Constraints let you restrict what types are allowed. Utility types
+   like Partial<T>, Pick<T, K>, Omit<T, K>, Record<K, V> are built-in
+   generic types for common transformations.
+
+Q: Debounce vs Throttle?
+A: Debounce: Execute only after N milliseconds of NO calls. Resets timer
+   on each call. Use for: search input (wait until user stops typing).
+
+   Throttle: Execute at most once per N milliseconds. Guarantees regular
+   execution. Use for: scroll handler, resize handler, rate limiting.
+
+Q: Event delegation?
+A: Attach a single event listener to a parent element instead of one per
+   child. Events bubble up from the target to the parent. Check
+   event.target to identify which child was clicked.
+
+   Benefits: fewer listeners (less memory), automatically works for
+   dynamically added child elements.
+
+
+================================================================================
+PART 6: AI / LLM ENGINEERING
+================================================================================
+
+Q: What is RAG (Retrieval-Augmented Generation)?
+A: Combines retrieval from a knowledge base with LLM generation.
+   1. Chunk documents into pieces
+   2. Generate vector embeddings for each chunk
+   3. Store in a vector database (pgvector, Pinecone, Weaviate)
+   4. At query time: embed the user's query, find similar chunks
+   5. Inject those chunks into the LLM prompt as context
+   6. LLM generates an answer grounded in the retrieved information
+
+   Reduces hallucination by giving the model real data to work with.
+   I used this concept in EventZity for vendor search.
+
+Q: What are embeddings?
+A: Dense vector representations of text in continuous space. Semantically
+   similar texts produce similar vectors. I use OpenAI's embedding model
+   (1536 dimensions) for vendor search — "affordable photographer in
+   Delhi" becomes a vector that's close to vectors of budget photographers
+   in Delhi. Cosine similarity measures closeness between vectors.
+
+Q: Prompt engineering techniques?
+A: - Zero-shot: Just instructions, no examples
+   - Few-shot: Include examples of input -> expected output
+   - Chain-of-thought: "Think step by step" — improves complex reasoning
+   - Role prompting: "You are an expert document parser..."
+   - Structured output: "Return JSON with these exact fields..."
+   - Temperature: 0 for deterministic/factual, higher for creative tasks
+
+   My extraction prompts use role prompting + structured output formatting.
+
+Q: Fine-tuning vs RAG?
+A: Fine-tuning: Modify model weights on custom data. Expensive, needs
+   curated datasets, changes the model's behavior. Hard to update.
+   Use when: you need a specific output format or writing style.
+
+   RAG: Keep the model as-is, provide external knowledge at query time.
+   Cheaper, easy to update (just update the vector store). Better for:
+   factual Q&A, knowledge that changes frequently.
+
+   "For most use cases, start with RAG. Fine-tune only if RAG isn't
+   enough."
+
+Q: What are hallucinations? How do you handle them?
+A: When the model generates confident but incorrect information.
+   Mitigations:
+   1. RAG — ground responses in real data
+   2. Temperature = 0 for deterministic outputs
+   3. Constrained generation (JSON schema, function calling)
+   4. Validation layer that checks LLM outputs against known rules
+   5. Human-in-the-loop for high-stakes decisions
+   6. Ask the model to cite sources or say "I don't know"
+
+Q: How do you handle token limits?
+A: Models have maximum context windows (4K to 1M+ tokens). Strategies:
+   1. Chunking: split large documents, process separately
+   2. Summarization: compress context before sending
+   3. Map-reduce: process chunks independently, combine results
+   4. Sliding window: overlap between chunks to maintain context
+   5. Use models with larger context when available
+
+   My extraction system processes individual documents (each fits in
+   context) rather than trying to batch everything.
+
+Q: What is prompt injection?
+A: Malicious input that tries to override the system prompt's instructions.
+   Direct injection: user crafts a prompt to bypass instructions.
+   Indirect injection: malicious content hidden in retrieved documents.
+
+   Defenses: Input sanitization, separate system/user message roles,
+   output validation, guardrails. In my system, extraction prompts are
+   system-defined (not user-editable), which limits the attack surface.
+
+Q: What are AI Agents?
+A: LLMs that can take actions — not just generate text, but use tools
+   (search, code execution, API calls), plan multi-step workflows, and
+   iterate on results. The LLM decides which tools to use and in what
+   order.
+
+   In my LangGraph system, each agent has specific capabilities
+   (PDF analysis, template creation, validation design) and can
+   call tools to accomplish its goals.
+
+Q: What is function calling / tool use?
+A: The model decides when to call a predefined function based on the
+   user's request. You define the function schema (name, parameters),
+   the model returns a structured call, your code executes it, and the
+   result goes back to the model for the next step.
+
+   This is how agents work — the LLM doesn't execute code directly,
+   it outputs structured function calls that your application executes.
+
+
+================================================================================
+PART 7: BEHAVIORAL QUESTIONS (STAR Format)
+================================================================================
+
+Prepare 6-8 strong stories from your experience. Each story can answer
+multiple questions. Use STAR: Situation, Task, Action, Result.
+
+--------------------------------------------------------------------------------
+YOUR STRONG STORIES:
+--------------------------------------------------------------------------------
+
+STORY 1: 3-Way Matching Fix (Problem Solving, Debugging)
+  S: A major client's invoice matching was failing — the Place of Supply
+     field wasn't being filled because invoice numbers were formatted
+     differently between the Invoice and POD systems.
+  T: Fix the matching without breaking existing flows for other clients.
+  A: Analyzed the data and found that "INV-2024-12345" in one system
+     corresponded to "12345" in another. Added numeric suffix extraction
+     for partial matching, plus a PO-number fallback for cases where even
+     that didn't work. Also found and fixed an ordering bug where a
+     variable was being used before it was assigned.
+  R: Matching started working for format-mismatched invoices. Unblocked
+     processing for the enterprise client. The fix was generic enough
+     to help with other clients too.
+
+STORY 2: SAP Integration (Ownership, Complexity, Impact)
+  S: Enterprise clients were manually entering hundreds of invoices into
+     SAP — tedious, error-prone, and slow.
+  T: Build an automated SAP posting engine supporting 3 different document
+     flows, each with different accounting rules.
+  A: Designed a fully config-driven architecture — no hardcoded business
+     logic. Built debit/credit pair generation, GST tax code resolution,
+     vendor-level validation filtering with fuzzy matching. Made everything
+     template-driven so new clients could be onboarded via config changes.
+  R: Replaced manual ERP entry for the client. New client formats are
+     supported via configuration changes, not code changes. Saved the
+     client significant time and reduced data entry errors.
+
+STORY 3: LangGraph Template Generation (Innovation, Learning Fast)
+  S: Creating extraction templates required manual analysis of PDFs —
+     identifying fields, understanding relationships, setting up validation
+     rules. Time-consuming and error-prone.
+  T: Automate the process using AI agents.
+  A: Taught myself LangGraph and multi-agent patterns. Built a 3-agent
+     workflow — PDF analysis, template creation, validation flow design —
+     orchestrated as a 9-node DAG. Added a conversational interface so
+     non-technical users could create templates by describing what they
+     need in natural language.
+  R: Dramatically reduced template creation time. Non-technical users
+     could now create templates through conversation instead of needing
+     developer involvement.
+
+STORY 4: ApplySurge Anti-Detection (Technical Challenge)
+  S: The job application automation kept getting blocked by bot detection
+     systems on job sites.
+  T: Make the automation look indistinguishable from a real user.
+  A: Implemented multiple stealth measures — user agent and viewport
+     rotation, browser fingerprint randomization (canvas, WebGL),
+     navigator property overrides, and using real Chrome instead of
+     Chromium. Added rate limiting and exclusive session locks to avoid
+     suspicious patterns.
+  R: Detection rate dropped significantly. The system successfully
+     applies to 500+ jobs per month.
+
+STORY 5: EventZity Semantic Search (Full-Stack, Impact)
+  S: Keyword-based vendor search was failing for natural language queries.
+     "Budget-friendly photographer in Delhi" returned nothing because
+     no vendor had those exact keywords.
+  T: Build search that understands intent, not just keywords.
+  A: Integrated pgvector with OpenAI embeddings for semantic similarity.
+     Built an NLP query processor with intent classification and entity
+     extraction. Added business logic boosting — category and location
+     matches get priority. Also built tier-weighted ranking for the
+     marketplace's monetization model.
+  R: Search relevance improved dramatically. Users could find vendors
+     using natural language, which was the most requested feature.
+
+STORY 6: Production Debugging Under Pressure (Pressure, Debugging)
+  S: A client reported that SAP downloads were failing right before their
+     month-end deadline.
+  T: Diagnose and fix the issue quickly — the client needed the data
+     that day.
+  A: Traced the issue to empty configuration fields that weren't being
+     handled properly — the code assumed they were always populated.
+     Also found issues with CSV parsing for a specific batch format
+     and the SAP date format not matching what was expected.
+  R: Fixed all three issues and deployed the same day. Client met their
+     month-end deadline. Added better validation for config fields to
+     prevent similar issues.
+
+--------------------------------------------------------------------------------
+QUESTION -> STORY MAPPING:
+--------------------------------------------------------------------------------
+
+Q: Tell me about a challenging technical problem you solved.
+   -> Story 1 (3-Way Matching) or Story 4 (Anti-Detection)
+
+Q: Tell me about a time you took ownership.
+   -> Story 2 (SAP Integration) or Story 5 (Semantic Search)
+
+Q: Describe a time you had to learn something quickly.
+   -> Story 3 (LangGraph — learned multi-agent AI patterns)
+
+Q: How do you handle ambiguity?
+   -> Story 2 (SAP — multiple modes, unclear requirements from clients)
+
+Q: Tell me about a time you improved a process.
+   -> Story 3 (Automated template creation)
+
+Q: Tell me about a time you delivered under pressure.
+   -> Story 6 (Production fix during month-end deadline)
+
+Q: Tell me about a failure or mistake.
+   -> Story 1 (initial matching approach failed, had to iterate and
+      find a better solution)
+
+Q: Describe a time you disagreed with a teammate.
+   -> Prepare one from a code review or design discussion. Focus on:
+      "I presented my reasoning with examples, listened to their
+      perspective, and we found a solution that combined the best of
+      both approaches."
+
+Q: Tell me about a time you mentored someone or helped a teammate.
+   -> If applicable, use an example. If not, talk about writing good
+      documentation or making your code review feedback constructive.
+
+Q: Why do you want to leave your current company?
+   -> "Growth, bigger scale, stronger engineering team. I've learned
+      a lot but I want to take on bigger challenges."
+
+Q: Why [Target Company]?
+   -> Research their products and engineering. Be specific.
+
+
+================================================================================
+PART 8: DSA PATTERNS & TOPICS
+================================================================================
+
+Use LeetCode / NeetCode for actual practice. These are the patterns most
+asked at your experience level, ordered by frequency.
+
+--------------------------------------------------------------------------------
+MUST-KNOW PATTERNS:
+--------------------------------------------------------------------------------
+
+1. TWO POINTERS / SLIDING WINDOW
+   - Two Sum, 3Sum, Container With Most Water
+   - Longest Substring Without Repeating Characters
+   - Minimum Window Substring
+   - Trapping Rain Water
+
+2. BINARY SEARCH
+   - Search in Rotated Sorted Array
+   - Find Minimum in Rotated Sorted Array
+   - Binary Search on Answer (Koko Eating Bananas, Split Array Largest Sum)
+   - Search a 2D Matrix
+
+3. HASH MAPS
+   - Group Anagrams, Valid Anagram
+   - Top K Frequent Elements
+   - Subarray Sum Equals K
+   - Longest Consecutive Sequence
+
+4. LINKED LISTS
+   - Reverse Linked List, Merge Two Sorted Lists
+   - Detect Cycle (Floyd's Tortoise & Hare), Remove Nth From End
+   - LRU Cache (linked list + hash map — VERY commonly asked)
+   - Merge K Sorted Lists (heap + linked list)
+
+5. TREES / BST
+   - BFS/DFS traversals (inorder, preorder, postorder, level-order)
+   - Max Depth, Same Tree, Invert Binary Tree
+   - Validate BST, Lowest Common Ancestor
+   - Serialize/Deserialize Binary Tree
+   - Diameter of Binary Tree, Binary Tree Maximum Path Sum
+
+6. GRAPHS (BFS/DFS)
+   - Number of Islands, Clone Graph
+   - Course Schedule (Topological Sort)
+   - Word Ladder, Rotting Oranges
+   - Dijkstra's Algorithm (weighted shortest path)
+   - Union Find / Disjoint Set
+
+7. DYNAMIC PROGRAMMING
+   - Climbing Stairs, House Robber, Coin Change
+   - Longest Common Subsequence, Longest Increasing Subsequence
+   - 0/1 Knapsack, Palindromic Substrings
+   - Word Break, Edit Distance
+   - DP on Grids (Unique Paths, Minimum Path Sum)
+
+8. STACKS / QUEUES
+   - Valid Parentheses, Min Stack
+   - Daily Temperatures (monotonic stack)
+   - Largest Rectangle in Histogram
+   - Implement Queue using Stacks
+
+9. HEAP / PRIORITY QUEUE
+   - Kth Largest Element
+   - Merge K Sorted Lists
+   - Top K Frequent Elements
+   - Find Median from Data Stream (two heaps)
+   - Task Scheduler
+
+10. BACKTRACKING
+    - Subsets, Permutations, Combination Sum
+    - N-Queens, Word Search, Sudoku Solver
+    - Generate Parentheses
+
+11. GREEDY
+    - Jump Game I & II
+    - Meeting Rooms, Merge Intervals
+    - Task Scheduler, Gas Station
+    - Activity Selection
+
+12. TRIES
+    - Implement Trie (Prefix Tree)
+    - Word Search II
+    - Design Add and Search Words Data Structure
+
+13. INTERVALS
+    - Merge Intervals, Insert Interval
+    - Non-Overlapping Intervals
+    - Meeting Rooms I & II
+
+14. BIT MANIPULATION (less common but shows up)
+    - Single Number, Number of 1 Bits
+    - Counting Bits, Reverse Bits
+
+--------------------------------------------------------------------------------
+PRACTICE STRATEGY:
+--------------------------------------------------------------------------------
+- NeetCode 150 covers all patterns above
+- Focus: Medium difficulty (80% of interview questions are mediums)
+- Practice consistently: 2-3 problems daily
+- Time yourself: 20-25 min for Medium, 40 min for Hard
+- Don't just solve — understand the PATTERN. When you see a new problem,
+  recognize which pattern applies.
+- For each pattern, know:
+  1. When to use it (recognize the problem type)
+  2. The template/approach (how to set up the solution)
+  3. Time and space complexity
+
+
+================================================================================
+QUICK REFERENCE: COMMON FOLLOW-UP QUESTIONS IN ANY INTERVIEW
+================================================================================
+
+These come up regardless of the topic:
+
+- "What would you do differently if you built it again?"
+  -> Always have an answer. Shows reflection and growth.
+
+- "How would you scale this to 10x/100x the current load?"
+  -> Think: caching, horizontal scaling, database sharding, message queues,
+     CDN, read replicas.
+
+- "What are the trade-offs of your approach?"
+  -> Every design decision has trade-offs. Show you think about them
+     proactively, not just when asked.
+
+- "How do you test this?"
+  -> Unit tests, integration tests, end-to-end tests. Mock external
+     services. Test edge cases.
+
+- "How do you monitor this in production?"
+  -> Logging, metrics (latency, error rate, throughput), alerting,
+     dashboards. Know what to monitor and why.
+
+- "What's the time/space complexity?"
+  -> Always be ready for this. For DSA AND for your system design choices.
+
+- "Why did you choose X technology over Y?"
+  -> Have a clear reason. "It fit our use case because..." not "It's
+     what I knew."
+
+================================================================================
+END OF PREPARATION GUIDE
+================================================================================
+
+Coverage:
+- Self introduction + HR round (15+ questions with answer scripts)
+- Resume deep-dive across ALL 3 projects + achievements (80+ Q&As)
+  - ProceSync: workflow engine, SAP posting, Kafka, LLM extraction,
+    3-way matching, LangGraph agents, caching, multi-tenancy, auth, SSE
+  - ApplySurge: browser automation, stealth, form filling, Celery pipeline,
+    CAPTCHA, job matching, session locks, cold email, rate limiting,
+    resume parsing, real-time WebSocket
+  - EventZity: Stripe payments, pgvector search, NLP processing, Socket.IO
+    chat, lead allocation, RBAC, Drizzle ORM, vendor subscriptions, frontend
+  - Patent, LeetCode, scholarship
+- System design (8 questions with full breakdowns)
+- OS, DBMS, Networking, OOP (60+ questions)
+- Kafka, Redis, MongoDB, PostgreSQL, Docker (50+ questions)
+- Python, JavaScript/TypeScript (25+ questions)
+- AI/LLM Engineering (15+ questions)
+- Behavioral with 6 STAR stories (15+ questions with story mapping)
+- 14 DSA patterns with key problems
+- Common follow-up questions
+
+This covers everything you'll face in SDE interviews at any level of
+company. Read it, internalize the answers in your own words, and practice
+saying them out loud. Make the answers your own — don't memorize word for
+word, understand the concepts and explain naturally.

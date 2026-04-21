@@ -1,0 +1,148 @@
+%------------------------
+% Resume - Paarth Panthri
+%------------------------
+
+\documentclass[a4paper,11pt]{article}
+
+\usepackage{latexsym}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage{array}
+\usepackage[a4paper,left=0.5in,right=0.5in,top=0.25in,bottom=0.15in]{geometry}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\urlstyle{rm}
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+\titleformat{\section}{
+  \vspace{-4pt}\scshape\raggedright\large
+}{}{0em}{}[\color{black}\titlerule \vspace{-4pt}]
+
+%-------------------------
+\newcommand{\resumeItem}[1]{
+  \item\small{#1}\vspace{-2pt}
+}
+
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-1pt}\item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & #2 \\
+      \textit{#3} & \textit{#4} \\
+    \end{tabular*}\vspace{-5pt}
+}
+
+\renewcommand{\labelitemii}{$\circ$}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=*, label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
+
+%-----------------------------
+\begin{document}
+
+%----------HEADING-----------------
+\begin{tabular*}{\textwidth}{l@{\extracolsep{\fill}}r}
+  \textbf{{\LARGE Paarth Panthri}} & \href{mailto:paarth.paan3@gmail.com}{paarth.paan3@gmail.com} $|$ +91 8535038215 \\
+  Bengaluru, India & \href{https://www.linkedin.com/in/paarth-panthri-1b01b2317/}{LinkedIn} $|$ \href{https://github.com/terabhaicoder}{GitHub} $|$ \href{https://leetcode.com/u/paarth2002/}{LeetCode} $|$ \href{https://paarthpanthri.com}{paarthpanthri.com} \\
+\end{tabular*}
+
+%-----------EDUCATION-----------------
+\section{Education}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {Vellore Institute of Technology, Vellore}{Jul 2021 -- May 2025}
+      {Bachelor of Technology in Computer Science Engineering}{CGPA: 8.74 / 10}
+  \resumeSubHeadingListEnd
+
+%-----------EXPERIENCE-----------------
+\section{Experience}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {August Innovate}{Bengaluru, India}
+      {Software Developer}{Jun 2025 -- Present}
+      \resumeItemListStart
+
+        \resumeItem{Designed and deployed a \textbf{configurable workflow execution engine} supporting \textbf{15+ node types} (conditional branching, API calls, LLM validation, multi-level approvals) with \textbf{multi-document cross-matching} and configurable rule engines, processing \textbf{200+ documents concurrently} in production.}
+
+        \resumeItem{Built \textbf{event-driven microservices} using \textbf{Apache Kafka} with compressed batch publishing and async consumer groups across \textbf{3+ services}, with dead-letter queues and exponential backoff retries for fault tolerance.}
+
+        \resumeItem{Integrated \textbf{multi-model LLM extraction} (GPT-4o, Gemini, Claude) with dynamic prompt templating, achieving \textbf{95\%+ field accuracy} across invoices, POs, and delivery documents for enterprise clients including Blinkit and Zomato.}
+
+        \resumeItem{Developed \textbf{LangGraph-based AI agents} that analyze sample PDFs and auto-generate extraction templates, reducing manual template creation time by \textbf{$\sim$80\%}.}
+
+        \resumeItem{Built \textbf{Redis caching layer} with pattern-based invalidation, \textbf{async connection pooling}, and TTL-based expiry for template metadata and tenant configurations, eliminating \textbf{$\sim$90\%} of repetitive database queries.}
+
+      \resumeItemListEnd
+  \resumeSubHeadingListEnd
+
+%-----------PROJECTS-----------------
+\section{Projects}
+  \resumeSubHeadingListStart
+
+    \resumeSubheading
+      {ApplySurge}{\href{https://applysurge.com}{applysurge.com}}
+      {AI-Powered Autonomous Job Application Platform}{}
+      \resumeItemListStart
+        \resumeItem{Built \textbf{ApplySurge}, a full-stack autonomous job application platform using \textbf{Next.js and FastAPI} that discovers, matches, and applies to jobs using \textbf{Playwright} browser automation and LLM-driven form completion.}
+        \resumeItem{Engineered a \textbf{multi-step form automation engine} using GPT-4o that parses dynamic application forms, handles dropdowns, file uploads, conditional fields, and screening questions at scale.}
+        \resumeItem{Designed a \textbf{distributed task pipeline} using \textbf{Celery, RabbitMQ, and Redis} with 4 dedicated worker queues, real-time progress tracking via \textbf{WebSockets}, and production deployment with \textbf{Docker Compose and Traefik} (auto-SSL).}
+      \resumeItemListEnd
+
+    \resumeSubheading
+      {EventZity}{\href{https://eventzity.com}{eventzity.com}}
+      {Full-Stack Event \& Wedding Planning Marketplace}{}
+      \resumeItemListStart
+
+        \resumeItem{Architected a \textbf{full-stack event planning marketplace} (React + Express + PostgreSQL) with \textbf{RESTful API design}, \textbf{Stripe Connect} payments enabling automated commission splits and vendor payouts across 50+ vendor categories.}
+
+        \resumeItem{Implemented \textbf{NLP-powered semantic search} using \textbf{OpenAI embeddings + pgvector} with intent classification, entity extraction, and tier-weighted ranking across vendor listings.}
+
+        \resumeItem{Built a \textbf{real-time chat system} using \textbf{Socket.IO} with room-based architecture, \textbf{JWT-based authentication}, typing indicators, read receipts, and unread count tracking with atomic database updates.}
+
+        \resumeItem{Designed a \textbf{role-based access control system} with hierarchical permissions across 4 user roles, \textbf{JWT/OAuth authentication flows}, a \textbf{3-tier subscription model} with feature-gating, and per-vendor trial period tracking.}
+
+      \resumeItemListEnd
+
+  \resumeSubHeadingListEnd
+
+%-----------TECHNICAL SKILLS-----------------
+\section{Technical Skills}
+\vspace{-2pt}
+\small{
+\begin{tabular}{ @{} >{\bfseries}l @{\hspace{4ex}} l }
+Languages & Java, Python, TypeScript, JavaScript, C++, SQL \\[3pt]
+Backend & Node.js, FastAPI, Express.js, Spring Boot, REST APIs, WebSockets \\[3pt]
+Distributed Systems & Apache Kafka, RabbitMQ, Celery, Redis, Microservices \\[3pt]
+Databases & PostgreSQL, MongoDB, Elasticsearch, pgvector \\[3pt]
+AI & LLMs, LangChain, LangGraph, RAG, OpenAI GPT-4o, Gemini \\[3pt]
+DevOps \& Cloud & Docker, AWS, Traefik, CI/CD, Nginx \\
+\end{tabular}
+}
+
+%-----------ACHIEVEMENTS-----------------
+\section{Achievements}
+\begin{itemize}[leftmargin=*, label=$\circ$]
+
+\item \small{\textbf{LeetCode}: Max Rating \textbf{1703} (Top 12.7\%) with \textbf{500+} problems solved.}
+
+\vspace{-5pt}
+\item \small{\textbf{Patent Filed (Published)}: Co-invented a \textbf{transfer learning-based detection system} for early diagnosis of Autism Spectrum Disorder using MRI neuroimaging. Awarded an institutional research grant (Rs.\ 20,000).}
+
+\vspace{-5pt}
+\item \small{Indian Air Force Benevolent Association Scholarship (2022--2024)}
+
+\end{itemize}
+
+\end{document}
