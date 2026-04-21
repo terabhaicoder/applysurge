@@ -56,6 +56,10 @@ backups/
 Overleaf*.txt
 DEPLOY.txt
 HOW_TO_DEPLOY.txt
+questionnaire.txt
+resume_bullets_final.txt
+resume_code.tex
+things.importantthings.txt
 audit-prompt.md
 job-agent-complete-prompt.md
 
