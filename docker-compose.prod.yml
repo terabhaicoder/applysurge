@@ -35,7 +35,6 @@ services:
         NEXT_PUBLIC_API_URL: https://api.${DOMAIN}/api/v1
         NEXT_PUBLIC_SOCKET_URL: https://api.${DOMAIN}
         NEXT_PUBLIC_GOOGLE_CLIENT_ID: ""
-    volumes: []
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)"

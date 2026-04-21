@@ -7,10 +7,6 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/.next
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
       - NEXT_PUBLIC_SOCKET_URL=http://localhost:8000
@@ -25,9 +21,6 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
-    volumes:
-      - ./backend:/app
-      - ./storage:/app/storage
     env_file:
       - .env
     depends_on:
@@ -45,9 +38,6 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile.worker
-    volumes:
-      - ./backend:/app
-      - ./storage:/app/storage
     env_file:
       - .env
     depends_on:
@@ -62,9 +52,6 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile.worker
-    volumes:
-      - ./backend:/app
-      - ./storage:/app/storage
     env_file:
       - .env
     depends_on:
@@ -83,8 +70,6 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile.worker
-    volumes:
-      - ./backend:/app
     env_file:
       - .env
     depends_on:
