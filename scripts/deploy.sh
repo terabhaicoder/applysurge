@@ -9,7 +9,7 @@ if [ ! -f .env ]; then
     exit 1
 fi
 
-source .env
+export $(grep -E '^(DOMAIN)=' .env | xargs)
 
 echo "1. Pulling latest code..."
 git pull origin main
