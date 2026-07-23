@@ -218,6 +218,10 @@ class LinkedInScraper(BaseScraper):
                 logger.info("LinkedIn login successful")
                 return True
 
+            # Take screenshot to see what happened
+            await self.take_screenshot("linkedin_post_submit")
+            logger.info(f"Post-submit URL: {self.page.url}")
+
             # Check for error messages
             error_el = await self.page.query_selector("#error-for-username, #error-for-password, .form__label--error")
             if error_el:
