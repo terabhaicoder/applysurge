@@ -20,11 +20,9 @@ import {
   ChevronRight,
   User,
 } from 'lucide-react';
-import { LogoFull } from '@/components/ui/logo';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/providers/toast-provider';
-import Link from 'next/link';
 
 const SETUP_DISMISSED_KEY = 'applysurge:setup_dismissed';
 
@@ -188,6 +186,12 @@ export default function SetupPage() {
   const [minMatchScore, setMinMatchScore] = useState(65);
   const [preferencesSet, setPreferencesSet] = useState(false);
 
+  const { data: existingPrefs } = useQuery({
+    queryKey: ['preferences'],
+    queryFn: () => api.get('/preferences/').then((r) => r.data),
+  });
+  const hasPreferences = preferencesSet || Boolean(existingPrefs?.desired_titles?.length) || (typeof existingPrefs?.desired_titles === 'string' && existingPrefs.desired_titles.length > 2);
+
   const prefsMutation = useMutation({
     mutationFn: () =>
       api.put('/preferences/', {
@@ -260,23 +264,11 @@ export default function SetupPage() {
     router.push('/dashboard');
   }, [router]);
 
-  const allDone = hasResume && preferencesSet && hasLinkedIn;
+  const allDone = hasResume && hasPreferences && hasLinkedIn;
 
   return (
-    <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
-      {/* Background glow */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-primary/5 rounded-full blur-[120px]" />
-      </div>
-
-      <div className="relative min-h-screen flex flex-col items-center px-4 py-8 sm:py-12">
-        {/* Logo */}
-        <div className="w-full max-w-2xl mb-8">
-          <Link href="/dashboard" onClick={() => localStorage.setItem(SETUP_DISMISSED_KEY, '1')}>
-            <LogoFull iconSize={24} textClassName="text-lg" />
-          </Link>
-        </div>
-
+    <div className="min-h-screen">
+      <div className="flex flex-col items-center px-4 py-8 sm:py-12">
         {/* Header */}
         <div className="w-full max-w-2xl text-center mb-10">
           <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
@@ -338,7 +330,7 @@ export default function SetupPage() {
             title="Set Job Preferences"
             description="Tell us what roles you're looking for so the agent finds the best matches."
             icon={SlidersHorizontal}
-            done={preferencesSet}
+            done={hasPreferences}
           >
             <div className="space-y-5">
               <div className="space-y-2">
@@ -394,7 +386,7 @@ export default function SetupPage() {
                 </div>
               </div>
 
-              {!preferencesSet ? (
+              {!hasPreferences ? (
                 <button
                   onClick={() => prefsMutation.mutate()}
                   disabled={prefsMutation.isPending || desiredTitles.length === 0}

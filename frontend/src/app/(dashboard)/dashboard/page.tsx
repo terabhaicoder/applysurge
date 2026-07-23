@@ -36,21 +36,21 @@ export default function DashboardPage() {
 
   const { data: resumes } = useQuery({
     queryKey: ['setup-resumes'],
-    queryFn: () => api.get('/resumes').then((r) => r.data),
+    queryFn: () => api.get('/resumes/').then((r) => r.data),
   });
 
   const { data: preferences } = useQuery({
     queryKey: ['setup-preferences'],
-    queryFn: () => api.get('/preferences').then((r) => r.data),
+    queryFn: () => api.get('/preferences/').then((r) => r.data),
   });
 
   const { data: credentials } = useQuery({
     queryKey: ['setup-credentials'],
-    queryFn: () => api.get('/credentials').then((r) => r.data),
+    queryFn: () => api.get('/credentials/').then((r) => r.data),
   });
 
   const hasResume = Array.isArray(resumes) ? resumes.length > 0 : Boolean(resumes?.items?.length);
-  const hasPreferences = Boolean(preferences?.desired_titles?.length);
+  const hasPreferences = Boolean(preferences?.desired_titles?.length) || (typeof preferences?.desired_titles === 'string' && preferences.desired_titles.length > 2);
   const hasLinkedIn = Array.isArray(credentials)
     ? credentials.some((c: any) => c.platform === 'linkedin')
     : Boolean(credentials?.items?.some?.((c: any) => c.platform === 'linkedin'));

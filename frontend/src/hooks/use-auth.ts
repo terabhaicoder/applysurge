@@ -69,8 +69,10 @@ export function useAuth() {
       // Ignore - agent might not be running or auth already stale
     }
     clearTokens();
-    storeLogout();
+    // Navigate first, then clear user state on next tick
+    // to prevent auth provider from intercepting with /login redirect
     router.push("/");
+    setTimeout(() => storeLogout(), 100);
   }, [router, storeLogout]);
 
   const fetchUser = useCallback(async () => {

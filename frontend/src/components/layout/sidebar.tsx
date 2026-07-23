@@ -7,9 +7,6 @@ import {
   Bot,
   Briefcase,
   FileText,
-  FileUp,
-  SlidersHorizontal,
-  Link2,
   BarChart3,
   ChevronLeft,
   ChevronRight,
@@ -34,30 +31,13 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
 }
 
-interface NavSection {
-  title: string;
-  items: NavItem[];
-}
-
-const sections: NavSection[] = [
-  {
-    title: 'MAIN',
-    items: [
-      { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-      { href: '/agent', label: 'Agent', icon: Bot },
-      { href: '/jobs', label: 'Jobs', icon: Briefcase },
-      { href: '/applications', label: 'Applications', icon: FileText },
-      { href: '/analytics', label: 'Analytics', icon: BarChart3 },
-    ],
-  },
-  {
-    title: 'SETUP',
-    items: [
-      { href: '/resume', label: 'Resume', icon: FileUp },
-      { href: '/preferences', label: 'Preferences', icon: SlidersHorizontal },
-      { href: '/connections', label: 'Connections', icon: Link2 },
-    ],
-  },
+const navItems: NavItem[] = [
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/agent', label: 'Agent', icon: Bot },
+  { href: '/jobs', label: 'Jobs', icon: Briefcase },
+  { href: '/applications', label: 'Applications', icon: FileText },
+  { href: '/analytics', label: 'Analytics', icon: BarChart3 },
+  { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -139,63 +119,47 @@ export function Sidebar() {
           </button>
         </div>
 
-        {/* ── Navigation sections ── */}
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4 px-2.5 space-y-5">
-          {sections.map((section) => (
-            <div key={section.title}>
-              {/* Section label */}
-              {sidebarOpen && (
-                <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/70 select-none">
-                  {section.title}
-                </p>
-              )}
+        {/* ── Navigation ── */}
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4 px-2.5">
+          <div className="space-y-0.5">
+            {navItems.map((item) => {
+              const isActive =
+                pathname === item.href ||
+                pathname.startsWith(item.href + '/');
 
-              {/* Divider when collapsed (replaces text label) */}
-              {!sidebarOpen && (
-                <div className="mx-auto mb-2 h-px w-6 bg-border/50" />
-              )}
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  title={!sidebarOpen ? item.label : undefined}
+                  className={cn(
+                    'group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
+                    isActive
+                      ? 'bg-primary/[0.08] text-primary font-semibold'
+                      : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'
+                  )}
+                >
+                  {/* Active accent bar */}
+                  {isActive && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-primary" />
+                  )}
 
-              <div className="space-y-0.5">
-                {section.items.map((item) => {
-                  const isActive =
-                    pathname === item.href ||
-                    pathname.startsWith(item.href + '/');
+                  <item.icon
+                    className={cn(
+                      'h-[18px] w-[18px] flex-shrink-0 transition-colors duration-200',
+                      isActive
+                        ? 'text-primary'
+                        : 'text-muted-foreground/80 group-hover:text-foreground'
+                    )}
+                  />
 
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      title={!sidebarOpen ? item.label : undefined}
-                      className={cn(
-                        'group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
-                        isActive
-                          ? 'bg-primary/[0.08] text-primary font-semibold'
-                          : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'
-                      )}
-                    >
-                      {/* Active accent bar */}
-                      {isActive && (
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-primary" />
-                      )}
-
-                      <item.icon
-                        className={cn(
-                          'h-[18px] w-[18px] flex-shrink-0 transition-colors duration-200',
-                          isActive
-                            ? 'text-primary'
-                            : 'text-muted-foreground/80 group-hover:text-foreground'
-                        )}
-                      />
-
-                      {sidebarOpen && (
-                        <span className="truncate">{item.label}</span>
-                      )}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+                  {sidebarOpen && (
+                    <span className="truncate">{item.label}</span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
         </nav>
 
         {/* ── Bottom user section ── */}
