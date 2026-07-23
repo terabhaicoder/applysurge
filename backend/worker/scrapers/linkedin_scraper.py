@@ -123,52 +123,48 @@ class LinkedInScraper(BaseScraper):
 
         # Fill login form
         try:
-            # Wait for page to fully load before interacting
+            # Wait for page to load fully
             await self.random_delay(2.0, 3.0)
 
-            # Use Playwright's get_by_label() — matches by visible label text.
-            # This is resilient to LinkedIn changing input IDs/names/attributes.
-            # LinkedIn labels: "Email or phone" and "Password"
-            try:
-                email_locator = self.page.get_by_label("Email or phone").first
-                await email_locator.wait_for(timeout=10000)
-                await email_locator.click()
-                await email_locator.fill(email)
-                logger.info("Filled email via label 'Email or phone'")
-            except Exception:
-                # Fallback to classic selectors
-                logger.info("Label locator failed, trying CSS selectors")
-                for selector in ["#username", 'input[name="session_key"]', 'input[type="email"]', 'input[type="text"]']:
-                    el = await self.page.query_selector(selector)
+            # Find email input — try multiple strategies
+            email_filled = False
+            for selector in ['#username', 'input[name="session_key"]', 'input[type="email"]', 'input[type="text"]']:
+                try:
+                    el = await self.page.wait_for_selector(selector, timeout=3000)
                     if el:
                         await el.click()
                         await el.fill(email)
-                        logger.info(f"Filled email via selector: {selector}")
+                        email_filled = True
+                        logger.info(f"Filled email via: {selector}")
                         break
-                else:
-                    logger.error("Could not find email input on LinkedIn login page")
-                    await self.take_screenshot("linkedin_login_no_email_field")
-                    return False
+                except Exception:
+                    continue
+
+            if not email_filled:
+                logger.error("Could not find email input on LinkedIn login page")
+                await self.take_screenshot("linkedin_login_no_email_field")
+                return False
 
             await self.random_delay(0.5, 1.0)
 
-            try:
-                password_locator = self.page.get_by_label("Password").first
-                await password_locator.click()
-                await password_locator.fill(password)
-                logger.info("Filled password via label 'Password'")
-            except Exception:
-                for selector in ["#password", 'input[name="session_password"]', 'input[type="password"]']:
-                    el = await self.page.query_selector(selector)
+            # Find password input
+            password_filled = False
+            for selector in ['#password', 'input[name="session_password"]', 'input[type="password"]']:
+                try:
+                    el = await self.page.wait_for_selector(selector, timeout=3000)
                     if el:
                         await el.click()
                         await el.fill(password)
-                        logger.info(f"Filled password via selector: {selector}")
+                        password_filled = True
+                        logger.info(f"Filled password via: {selector}")
                         break
-                else:
-                    logger.error("Could not find password input on LinkedIn login page")
-                    await self.take_screenshot("linkedin_login_no_password_field")
-                    return False
+                except Exception:
+                    continue
+
+            if not password_filled:
+                logger.error("Could not find password input on LinkedIn login page")
+                await self.take_screenshot("linkedin_login_no_password_field")
+                return False
             await self.random_delay(0.5, 1.5)
 
             # Click sign in button
