@@ -67,9 +67,8 @@ export default function DashboardPage() {
 
   const hasResume = Array.isArray(resumes) ? resumes.length > 0 : Boolean(resumes?.items?.length);
   const hasPreferences = Boolean(preferences?.desired_titles?.length) || (typeof preferences?.desired_titles === 'string' && preferences.desired_titles.length > 2);
-  const hasLinkedIn = Array.isArray(credentials)
-    ? credentials.some((c: any) => c.platform === 'linkedin')
-    : Boolean(credentials?.items?.some?.((c: any) => c.platform === 'linkedin'));
+  const credList = Array.isArray(credentials) ? credentials : (credentials?.items || credentials?.data || []);
+  const hasLinkedIn = Array.isArray(credList) && credList.some((c: any) => c.platform === 'linkedin');
 
   const setupItems = [
     { label: 'Upload your resume', done: hasResume },
