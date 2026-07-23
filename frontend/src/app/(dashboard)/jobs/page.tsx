@@ -34,10 +34,8 @@ export default function JobsPage() {
   });
 
   const sources = [
-    { value: 'all', label: 'All Sources' },
+    { value: 'all', label: 'All' },
     { value: 'linkedin', label: 'LinkedIn' },
-    { value: 'naukri', label: 'Naukri' },
-    { value: 'startup_outreach', label: 'Startups' },
   ];
 
   return (
@@ -49,9 +47,9 @@ export default function JobsPage() {
           <p className="text-muted-foreground text-sm mt-1">Jobs matched to your preferences by the agent</p>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-card border border-border/50">
-          <Sparkles className="w-4 h-4 text-primary" />
+          <Briefcase className="w-4 h-4 text-primary" />
           <span className="text-sm font-medium text-foreground">{data?.total || 0}</span>
-          <span className="text-sm text-muted-foreground">jobs found</span>
+          <span className="text-sm text-muted-foreground">jobs</span>
         </div>
       </div>
 

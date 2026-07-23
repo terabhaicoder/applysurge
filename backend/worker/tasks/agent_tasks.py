@@ -459,30 +459,38 @@ def run_agent_session(self, user_id: str):
         session.commit()
         pending_jobs = _get_pending_jobs(user_id, remaining, session)
 
-        # If no queued jobs, run discovery + matching once
+        # If no queued jobs, run discovery + matching inline.
+        # Cannot use .apply() (blocks event loop) or .apply_async().get()
+        # (Celery forbids result.get() inside a task). Instead, call the
+        # discovery and matching logic directly in this process.
         if not pending_jobs:
             logger.info(f"No pending jobs for user {user_id}, triggering discovery")
             _log_agent_activity(user_id, "discovering_jobs", "Searching for new jobs...")
 
             try:
-                # Dispatch discovery to the scraping queue (worker-1) and wait.
-                # Previously used .apply() which ran synchronously inside
-                # worker-browser, causing asyncio event loop conflicts.
                 from worker.tasks.job_discovery import discover_jobs_for_user
-                discovery_result = discover_jobs_for_user.apply_async(args=[user_id])
-                discovery_outcome = discovery_result.get(timeout=600)
-                logger.info(f"Discovery completed for {user_id}: {discovery_outcome}")
+                from worker.tasks.job_matching import match_jobs_for_user
+
+                # Run discovery synchronously via .apply(throw=True).
+                # Using throw=True so exceptions propagate instead of being swallowed.
+                # .apply() runs in-process but we accept the event loop tradeoff
+                # since discovery creates its own loop via asyncio.run().
+                discovery_result = discover_jobs_for_user.apply(args=[user_id], throw=True)
+                discovery_outcome = discovery_result.result or {}
+                new_jobs = discovery_outcome.get("new_jobs", 0)
+                logger.info(f"Discovery completed for {user_id}: {new_jobs} new jobs")
                 _log_agent_activity(
                     user_id, "discovery_complete",
-                    f"Job discovery finished — found {discovery_outcome.get('new_jobs', 0)} new jobs",
+                    f"Job discovery finished — found {new_jobs} new jobs",
                 )
 
-                # Dispatch matching to the default queue (worker-1) and wait.
-                from worker.tasks.job_matching import match_jobs_for_user
-                matching_result = match_jobs_for_user.apply_async(args=[user_id])
-                matching_outcome = matching_result.get(timeout=300)
-                logger.info(f"Matching completed for {user_id}: {matching_outcome}")
+                # Run matching synchronously
+                match_jobs_for_user.apply(args=[user_id], throw=True)
+                logger.info(f"Matching completed for {user_id}")
                 _log_agent_activity(user_id, "matching_complete", "Job matching finished")
+
+                # Re-set event loop after discovery/matching since asyncio.run() clears it
+                asyncio.set_event_loop(loop)
 
                 session.commit()
                 pending_jobs = _get_pending_jobs(user_id, remaining, session)
@@ -491,7 +499,8 @@ def run_agent_session(self, user_id: str):
             except Exception as e:
                 logger.error(f"Job discovery/matching failed for {user_id}: {e}", exc_info=True)
                 _log_agent_activity(user_id, "discovery_error", f"Job discovery error: {str(e)}")
-                # Still try to get any jobs that might have been discovered before the error
+                # Re-set event loop so apply phase still works
+                asyncio.set_event_loop(loop)
                 try:
                     session.rollback()
                     pending_jobs = _get_pending_jobs(user_id, remaining, session)

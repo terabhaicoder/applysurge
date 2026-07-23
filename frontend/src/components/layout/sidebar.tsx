@@ -37,7 +37,7 @@ const navItems: NavItem[] = [
   { href: '/jobs', label: 'Jobs', icon: Briefcase },
   { href: '/applications', label: 'Applications', icon: FileText },
   { href: '/analytics', label: 'Analytics', icon: BarChart3 },
-  { href: '/settings', label: 'Settings', icon: Settings },
+  { href: '/settings', label: 'Setup', icon: Settings },
 ];
 
 /* ------------------------------------------------------------------ */

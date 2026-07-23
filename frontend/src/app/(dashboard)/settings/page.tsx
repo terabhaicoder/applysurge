@@ -34,7 +34,7 @@ import { formatDate } from '@/lib/utils';
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
-type TabKey = 'profile' | 'preferences' | 'resume' | 'linkedin' | 'billing';
+type TabKey = 'profile' | 'preferences' | 'resume' | 'linkedin';
 
 interface TabDef {
   key: TabKey;
@@ -47,7 +47,6 @@ const tabs: TabDef[] = [
   { key: 'preferences', label: 'Preferences', icon: SlidersHorizontal },
   { key: 'resume', label: 'Resume', icon: FileText },
   { key: 'linkedin', label: 'LinkedIn', icon: Link2 },
-  { key: 'billing', label: 'Billing', icon: CreditCard },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -1033,8 +1032,6 @@ export default function SettingsPage() {
         return <ResumeTab />;
       case 'linkedin':
         return <LinkedInTab />;
-      case 'billing':
-        return <BillingTab />;
       default:
         return null;
     }
@@ -1045,10 +1042,10 @@ export default function SettingsPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground tracking-tight">
-          Settings
+          Setup
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Manage your account and preferences
+          Configure your profile, preferences, and LinkedIn connection
         </p>
       </div>
 

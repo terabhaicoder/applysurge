@@ -8,6 +8,7 @@ import {
   Bot,
   BarChart3,
   Terminal,
+  Check,
   CheckCircle2,
   Loader2,
   FileText,
@@ -85,12 +86,12 @@ export default function LandingPage() {
               >
                 How It Works
               </a>
-              <Link
-                href="/pricing"
+              <a
+                href="#pricing"
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
                 Pricing
-              </Link>
+              </a>
             </div>
 
             <div className="flex items-center gap-3">
@@ -357,6 +358,72 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ─── Pricing ─── */}
+      <section id="pricing" className="py-24 lg:py-32 px-6 relative scroll-mt-20">
+        <div className="max-w-3xl mx-auto relative z-10">
+          <div className="text-center mb-16">
+            <h2 className="font-display text-3xl md:text-5xl font-extrabold tracking-tight text-foreground">
+              Simple <span className="text-gradient">pricing</span>
+            </h2>
+            <p className="mt-5 text-muted-foreground max-w-xl mx-auto text-lg">
+              Start automating your job search for free. Upgrade when you need more.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Free Plan */}
+            <div className="bg-card border border-border/50 rounded-2xl p-8">
+              <h3 className="font-display text-xl font-bold text-foreground">Free</h3>
+              <p className="text-sm text-muted-foreground mt-1">Get started with LinkedIn automation</p>
+              <div className="mt-6 mb-8">
+                <span className="font-display text-5xl font-extrabold text-foreground">$0</span>
+              </div>
+              <ul className="space-y-3 mb-8">
+                {['10 applications per month', 'AI-powered job matching', 'LinkedIn Easy Apply', 'AI screening answers', 'Application tracking'].map((f) => (
+                  <li key={f} className="flex items-center gap-2.5 text-sm text-muted-foreground">
+                    <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                      <Check className="w-3 h-3 text-emerald-500" />
+                    </div>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/register" className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-sm bg-primary hover:bg-primary/90 text-primary-foreground shadow-md shadow-primary/20 transition-all">
+                Get Started Free <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            {/* Pro Plan */}
+            <div className="relative bg-card border border-primary/30 rounded-2xl p-8 shadow-lg shadow-primary/[0.06]">
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-secondary border border-border text-muted-foreground text-xs font-bold rounded-full">
+                  Coming Soon
+                </span>
+              </div>
+              <h3 className="font-display text-xl font-bold text-foreground">Pro</h3>
+              <p className="text-sm text-muted-foreground mt-1">For serious job seekers</p>
+              <div className="mt-6 mb-8">
+                <span className="font-display text-5xl font-extrabold text-foreground">$29</span>
+                <span className="text-muted-foreground text-sm">/month</span>
+              </div>
+              <ul className="space-y-3 mb-8">
+                {['Unlimited applications', 'Advanced AI matching', 'Priority job discovery', 'Cover letter generation', 'Resume optimization', 'Priority support'].map((f) => (
+                  <li key={f} className="flex items-center gap-2.5 text-sm text-muted-foreground">
+                    <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                      <Check className="w-3 h-3 text-emerald-500" />
+                    </div>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <div className="w-full flex items-center justify-center py-3.5 rounded-xl font-semibold text-sm border border-border text-muted-foreground cursor-not-allowed opacity-60">
+                Coming Soon
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ─── FAQ ─── */}
       <section className="py-24 lg:py-32 px-6 relative">
         <div className="max-w-3xl mx-auto relative z-10">
@@ -405,30 +472,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── Final CTA ─── */}
-      <section className="py-24 lg:py-32 px-6 relative overflow-hidden">
-        {/* Gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.06] via-accent/[0.04] to-transparent pointer-events-none" />
-        <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] bg-primary/[0.05] rounded-full blur-[120px] pointer-events-none" />
-
-        <div className="max-w-3xl mx-auto text-center relative z-10">
-          <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 text-foreground">
-            Stop applying manually.
-          </h2>
-          <p className="text-muted-foreground mb-10 max-w-xl mx-auto text-lg leading-relaxed">
-            Let the agent handle the grind. You focus on preparing for the
-            interviews that land.
-          </p>
-          <Link
-            href="/register"
-            className="group inline-flex items-center gap-2.5 bg-white text-indigo-600 hover:bg-white/90 font-semibold text-base px-10 py-4 rounded-xl transition-all duration-200 shadow-xl shadow-black/10 hover:-translate-y-0.5"
-          >
-            Get Started Free
-            <ArrowRight className="w-4.5 h-4.5 group-hover:translate-x-0.5 transition-transform" />
-          </Link>
-        </div>
-      </section>
-
       {/* ─── Footer ─── */}
       <footer className="border-t border-border/50 pt-16 pb-10 px-6">
         <div className="max-w-6xl mx-auto">
@@ -450,7 +493,7 @@ export default function LandingPage() {
               <ul className="space-y-3">
                 <li><a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a></li>
                 <li><a href="#how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors">How It Works</a></li>
-                <li><Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</Link></li>
+                <li><a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</a></li>
               </ul>
             </div>
 
