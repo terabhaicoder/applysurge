@@ -130,7 +130,7 @@ class LinkedInScraper(BaseScraper):
             # This is resilient to LinkedIn changing input IDs/names/attributes.
             # LinkedIn labels: "Email or phone" and "Password"
             try:
-                email_locator = self.page.get_by_label("Email or phone")
+                email_locator = self.page.get_by_label("Email or phone").first
                 await email_locator.wait_for(timeout=10000)
                 await email_locator.click()
                 await email_locator.fill(email)
@@ -138,7 +138,7 @@ class LinkedInScraper(BaseScraper):
             except Exception:
                 # Fallback to classic selectors
                 logger.info("Label locator failed, trying CSS selectors")
-                for selector in ["#username", 'input[name="session_key"]', 'input[type="text"]', 'input[type="email"]']:
+                for selector in ["#username", 'input[name="session_key"]', 'input[type="email"]', 'input[type="text"]']:
                     el = await self.page.query_selector(selector)
                     if el:
                         await el.click()
@@ -153,7 +153,7 @@ class LinkedInScraper(BaseScraper):
             await self.random_delay(0.5, 1.0)
 
             try:
-                password_locator = self.page.get_by_label("Password")
+                password_locator = self.page.get_by_label("Password").first
                 await password_locator.click()
                 await password_locator.fill(password)
                 logger.info("Filled password via label 'Password'")
