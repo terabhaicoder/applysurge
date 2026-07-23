@@ -123,48 +123,61 @@ class LinkedInScraper(BaseScraper):
 
         # Fill login form
         try:
-            # Wait for page to load fully
-            await self.random_delay(2.0, 3.0)
+            # Wait for page to fully render (LinkedIn uses React, needs time)
+            await asyncio.sleep(5)
 
-            # Find email input — try multiple strategies
-            email_filled = False
-            for selector in ['#username', 'input[name="session_key"]', 'input[type="email"]', 'input[type="text"]']:
-                try:
-                    el = await self.page.wait_for_selector(selector, timeout=3000)
-                    if el:
-                        await el.click()
-                        await el.fill(email)
-                        email_filled = True
-                        logger.info(f"Filled email via: {selector}")
-                        break
-                except Exception:
-                    continue
+            # Use JavaScript to fill the login form directly — most reliable
+            # approach as it bypasses Playwright selector issues with React inputs
+            login_success = await self.page.evaluate("""
+                (credentials) => {
+                    // Find all visible input elements
+                    const inputs = Array.from(document.querySelectorAll('input'));
+                    let emailInput = null;
+                    let passwordInput = null;
 
-            if not email_filled:
-                logger.error("Could not find email input on LinkedIn login page")
-                await self.take_screenshot("linkedin_login_no_email_field")
+                    for (const input of inputs) {
+                        const type = (input.type || '').toLowerCase();
+                        const rect = input.getBoundingClientRect();
+                        const isVisible = rect.width > 0 && rect.height > 0;
+
+                        if (!isVisible) continue;
+
+                        if ((type === 'email' || type === 'text' || type === 'tel') && !emailInput) {
+                            emailInput = input;
+                        } else if (type === 'password' && !passwordInput) {
+                            passwordInput = input;
+                        }
+                    }
+
+                    if (!emailInput || !passwordInput) {
+                        return { success: false, error: 'Could not find email or password inputs',
+                                 foundEmail: !!emailInput, foundPassword: !!passwordInput,
+                                 totalInputs: inputs.length };
+                    }
+
+                    // Set values using native input setter to trigger React state updates
+                    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+                        window.HTMLInputElement.prototype, 'value'
+                    ).set;
+
+                    nativeInputValueSetter.call(emailInput, credentials.email);
+                    emailInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    emailInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+                    nativeInputValueSetter.call(passwordInput, credentials.password);
+                    passwordInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    passwordInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+                    return { success: true };
+                }
+            """, {"email": email, "password": password})
+
+            if not login_success.get("success"):
+                logger.error(f"LinkedIn login form fill failed: {login_success}")
+                await self.take_screenshot("linkedin_login_no_fields")
                 return False
 
-            await self.random_delay(0.5, 1.0)
-
-            # Find password input
-            password_filled = False
-            for selector in ['#password', 'input[name="session_password"]', 'input[type="password"]']:
-                try:
-                    el = await self.page.wait_for_selector(selector, timeout=3000)
-                    if el:
-                        await el.click()
-                        await el.fill(password)
-                        password_filled = True
-                        logger.info(f"Filled password via: {selector}")
-                        break
-                except Exception:
-                    continue
-
-            if not password_filled:
-                logger.error("Could not find password input on LinkedIn login page")
-                await self.take_screenshot("linkedin_login_no_password_field")
-                return False
+            logger.info("Filled LinkedIn login form via JavaScript")
             await self.random_delay(0.5, 1.5)
 
             # Click sign in button
