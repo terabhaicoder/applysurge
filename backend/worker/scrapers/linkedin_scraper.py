@@ -123,15 +123,42 @@ class LinkedInScraper(BaseScraper):
 
         # Fill login form
         try:
-            # Wait for login form
-            await self.page.wait_for_selector("#username", timeout=10000)
+            # Wait for login form — LinkedIn has multiple layouts:
+            # Old: #username / #password
+            # New (2025+): input[name="session_key"] or generic inputs
+            email_selector = None
+            for selector in ["#username", 'input[name="session_key"]', 'input[autocomplete="username"]', 'input[type="text"]']:
+                try:
+                    await self.page.wait_for_selector(selector, timeout=5000)
+                    email_selector = selector
+                    break
+                except Exception:
+                    continue
+
+            if not email_selector:
+                logger.error("Could not find email input on LinkedIn login page")
+                await self.take_screenshot("linkedin_login_no_email_field")
+                return False
 
             # Enter email with human-like typing
-            await self.human_type("#username", email)
+            await self.human_type(email_selector, email)
             await self.random_delay(0.5, 1.0)
 
+            # Find password field
+            password_selector = None
+            for selector in ["#password", 'input[name="session_password"]', 'input[autocomplete="current-password"]', 'input[type="password"]']:
+                el = await self.page.query_selector(selector)
+                if el:
+                    password_selector = selector
+                    break
+
+            if not password_selector:
+                logger.error("Could not find password input on LinkedIn login page")
+                await self.take_screenshot("linkedin_login_no_password_field")
+                return False
+
             # Enter password
-            await self.human_type("#password", password)
+            await self.human_type(password_selector, password)
             await self.random_delay(0.5, 1.5)
 
             # Click sign in button
