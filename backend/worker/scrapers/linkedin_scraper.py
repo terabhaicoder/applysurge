@@ -180,8 +180,21 @@ class LinkedInScraper(BaseScraper):
             logger.info("Filled LinkedIn login form via JavaScript")
             await self.random_delay(0.5, 1.5)
 
-            # Click sign in button
-            await self.page.click('button[type="submit"]')
+            # Click sign in button — try multiple approaches
+            submitted = False
+            for selector in ['button[type="submit"]', 'button:has-text("Sign in")', 'button.btn__primary--large']:
+                try:
+                    await self.page.click(selector, timeout=5000)
+                    submitted = True
+                    logger.info(f"Clicked submit via: {selector}")
+                    break
+                except Exception:
+                    continue
+
+            if not submitted:
+                # Fallback: press Enter in the password field or use JS
+                await self.page.evaluate("document.querySelector('form')?.submit() || document.querySelector('button')?.click()")
+                logger.info("Submitted form via JS fallback")
             await self.random_delay(2.0, 4.0)
 
             # Wait for navigation
