@@ -180,21 +180,25 @@ class LinkedInScraper(BaseScraper):
             logger.info("Filled LinkedIn login form via JavaScript")
             await self.random_delay(0.5, 1.5)
 
-            # Click sign in button — try multiple approaches
-            submitted = False
-            for selector in ['button[type="submit"]', 'button:has-text("Sign in")', 'button.btn__primary--large']:
-                try:
-                    await self.page.click(selector, timeout=5000)
-                    submitted = True
-                    logger.info(f"Clicked submit via: {selector}")
-                    break
-                except Exception:
-                    continue
-
-            if not submitted:
-                # Fallback: press Enter in the password field or use JS
-                await self.page.evaluate("document.querySelector('form')?.submit() || document.querySelector('button')?.click()")
-                logger.info("Submitted form via JS fallback")
+            # Click the Sign in button via JavaScript (most reliable for React)
+            await self.page.evaluate("""
+                () => {
+                    // Find the Sign in button by text content
+                    const buttons = Array.from(document.querySelectorAll('button'));
+                    const signInBtn = buttons.find(b => b.textContent.trim() === 'Sign in');
+                    if (signInBtn) {
+                        signInBtn.click();
+                        return true;
+                    }
+                    // Fallback: submit form or click first button with type=submit
+                    const submitBtn = document.querySelector('button[type="submit"]');
+                    if (submitBtn) { submitBtn.click(); return true; }
+                    const form = document.querySelector('form');
+                    if (form) { form.submit(); return true; }
+                    return false;
+                }
+            """)
+            logger.info("Clicked Sign in button via JavaScript")
             await self.random_delay(2.0, 4.0)
 
             # Wait for navigation
