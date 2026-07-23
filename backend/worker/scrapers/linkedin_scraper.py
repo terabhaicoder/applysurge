@@ -123,42 +123,52 @@ class LinkedInScraper(BaseScraper):
 
         # Fill login form
         try:
-            # Wait for login form — LinkedIn has multiple layouts:
-            # Old: #username / #password
-            # New (2025+): input[name="session_key"] or generic inputs
-            email_selector = None
-            for selector in ["#username", 'input[name="session_key"]', 'input[autocomplete="username"]', 'input[type="text"]']:
-                try:
-                    await self.page.wait_for_selector(selector, timeout=5000)
-                    email_selector = selector
-                    break
-                except Exception:
-                    continue
+            # Wait for page to fully load before interacting
+            await self.random_delay(2.0, 3.0)
 
-            if not email_selector:
-                logger.error("Could not find email input on LinkedIn login page")
-                await self.take_screenshot("linkedin_login_no_email_field")
-                return False
+            # Use Playwright's get_by_label() — matches by visible label text.
+            # This is resilient to LinkedIn changing input IDs/names/attributes.
+            # LinkedIn labels: "Email or phone" and "Password"
+            try:
+                email_locator = self.page.get_by_label("Email or phone")
+                await email_locator.wait_for(timeout=10000)
+                await email_locator.click()
+                await email_locator.fill(email)
+                logger.info("Filled email via label 'Email or phone'")
+            except Exception:
+                # Fallback to classic selectors
+                logger.info("Label locator failed, trying CSS selectors")
+                for selector in ["#username", 'input[name="session_key"]', 'input[type="text"]', 'input[type="email"]']:
+                    el = await self.page.query_selector(selector)
+                    if el:
+                        await el.click()
+                        await el.fill(email)
+                        logger.info(f"Filled email via selector: {selector}")
+                        break
+                else:
+                    logger.error("Could not find email input on LinkedIn login page")
+                    await self.take_screenshot("linkedin_login_no_email_field")
+                    return False
 
-            # Enter email with human-like typing
-            await self.human_type(email_selector, email)
             await self.random_delay(0.5, 1.0)
 
-            # Find password field
-            password_selector = None
-            for selector in ["#password", 'input[name="session_password"]', 'input[autocomplete="current-password"]', 'input[type="password"]']:
-                el = await self.page.query_selector(selector)
-                if el:
-                    password_selector = selector
-                    break
-
-            if not password_selector:
-                logger.error("Could not find password input on LinkedIn login page")
-                await self.take_screenshot("linkedin_login_no_password_field")
-                return False
-
-            # Enter password
-            await self.human_type(password_selector, password)
+            try:
+                password_locator = self.page.get_by_label("Password")
+                await password_locator.click()
+                await password_locator.fill(password)
+                logger.info("Filled password via label 'Password'")
+            except Exception:
+                for selector in ["#password", 'input[name="session_password"]', 'input[type="password"]']:
+                    el = await self.page.query_selector(selector)
+                    if el:
+                        await el.click()
+                        await el.fill(password)
+                        logger.info(f"Filled password via selector: {selector}")
+                        break
+                else:
+                    logger.error("Could not find password input on LinkedIn login page")
+                    await self.take_screenshot("linkedin_login_no_password_field")
+                    return False
             await self.random_delay(0.5, 1.5)
 
             # Click sign in button
