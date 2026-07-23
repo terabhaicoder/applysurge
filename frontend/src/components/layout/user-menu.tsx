@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { User, Settings, LogOut, CreditCard, ChevronDown } from 'lucide-react';
+import { User, LogOut, ChevronDown } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
@@ -55,22 +55,6 @@ export function UserMenu() {
             >
               <User className="w-4 h-4 text-muted-foreground" />
               Profile
-            </Link>
-            <Link
-              href="/settings"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
-            >
-              <Settings className="w-4 h-4 text-muted-foreground" />
-              Settings
-            </Link>
-            <Link
-              href="/settings/billing"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
-            >
-              <CreditCard className="w-4 h-4 text-muted-foreground" />
-              Billing
             </Link>
           </div>
 

@@ -37,4 +37,6 @@ RUN playwright install-deps chromium || true
 
 COPY . .
 
+RUN mkdir -p /app/storage/resumes /app/storage/screenshots
+
 CMD ["celery", "-A", "worker.celery_app", "worker", "--loglevel=info"]

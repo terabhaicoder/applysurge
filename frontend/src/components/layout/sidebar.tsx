@@ -11,7 +11,6 @@ import {
   SlidersHorizontal,
   Link2,
   BarChart3,
-  Mail,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -48,6 +47,7 @@ const sections: NavSection[] = [
       { href: '/agent', label: 'Agent', icon: Bot },
       { href: '/jobs', label: 'Jobs', icon: Briefcase },
       { href: '/applications', label: 'Applications', icon: FileText },
+      { href: '/analytics', label: 'Analytics', icon: BarChart3 },
     ],
   },
   {
@@ -56,13 +56,6 @@ const sections: NavSection[] = [
       { href: '/resume', label: 'Resume', icon: FileUp },
       { href: '/preferences', label: 'Preferences', icon: SlidersHorizontal },
       { href: '/connections', label: 'Connections', icon: Link2 },
-    ],
-  },
-  {
-    title: 'MORE',
-    items: [
-      { href: '/analytics', label: 'Analytics', icon: BarChart3 },
-      { href: '/emails', label: 'Emails', icon: Mail },
     ],
   },
 ];
@@ -94,7 +87,7 @@ export function Sidebar() {
   const handleLogout = () => {
     clearTokens();
     logout();
-    router.push('/login');
+    router.push('/');
   };
 
   return (

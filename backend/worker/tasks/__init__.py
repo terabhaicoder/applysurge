@@ -13,6 +13,7 @@ from worker.tasks.followup_task import send_scheduled_followups
 from worker.tasks.analytics_task import update_daily_stats
 from worker.tasks.scheduled_tasks import reset_daily_limits, send_daily_summaries
 from worker.tasks.agent_tasks import run_agent_session, stop_agent_session, get_agent_logs
+from worker.tasks.startup_outreach_task import process_all_users_pipeline
 
 __all__ = [
     "discover_jobs_for_all_users",
@@ -30,4 +31,5 @@ __all__ = [
     "run_agent_session",
     "stop_agent_session",
     "get_agent_logs",
+    "process_all_users_pipeline",
 ]

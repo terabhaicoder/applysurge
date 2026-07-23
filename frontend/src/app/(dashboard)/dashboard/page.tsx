@@ -3,8 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import {
   Briefcase,
-  MessageSquare,
-  Send,
+  Target,
   Calendar,
   Play,
   Pause,
@@ -14,6 +13,7 @@ import {
   Check,
   AlertCircle,
   Inbox,
+  Zap,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useAgent } from '@/hooks/use-agent';
@@ -69,23 +69,20 @@ export default function DashboardPage() {
       value: stats?.total_applications ?? 0,
       change: stats?.applications_change ?? 0,
       icon: Briefcase,
-      gradient: 'from-indigo-500 to-indigo-600',
       iconBg: 'bg-indigo-500/10 text-indigo-500',
     },
     {
-      label: 'Responses',
-      value: stats?.total_responses ?? 0,
-      change: stats?.responses_change ?? 0,
-      icon: MessageSquare,
-      gradient: 'from-emerald-500 to-emerald-600',
+      label: 'Jobs Discovered',
+      value: stats?.jobs_discovered ?? 0,
+      change: 0,
+      icon: Target,
       iconBg: 'bg-emerald-500/10 text-emerald-500',
     },
     {
-      label: 'Emails Sent',
-      value: stats?.emails_sent ?? 0,
-      change: stats?.emails_change ?? 0,
-      icon: Send,
-      gradient: 'from-violet-500 to-violet-600',
+      label: 'Match Rate',
+      value: `${stats?.success_rate ?? 0}%`,
+      change: 0,
+      icon: Zap,
       iconBg: 'bg-violet-500/10 text-violet-500',
     },
     {
@@ -93,7 +90,6 @@ export default function DashboardPage() {
       value: stats?.interviews ?? 0,
       change: stats?.interviews_change ?? 0,
       icon: Calendar,
-      gradient: 'from-amber-500 to-amber-600',
       iconBg: 'bg-amber-500/10 text-amber-500',
     },
   ];
@@ -218,145 +214,123 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Two-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Applications (2/3 or full width when setup complete) */}
-        <div className={cn(completedCount === setupItems.length ? 'lg:col-span-3' : 'lg:col-span-2', 'bg-card rounded-2xl border border-border/40 overflow-hidden shadow-sm')}>
-          <div className="flex items-center justify-between p-5 border-b border-border/30">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
-                <Briefcase className="w-4 h-4 text-indigo-500" />
+      {/* Setup Progress Banner - shown only when incomplete */}
+      {completedCount < setupItems.length && (
+        <div className="bg-card rounded-2xl border border-border/40 p-4 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <AlertCircle className="w-4 h-4 text-primary" />
               </div>
-              <h2 className="font-semibold text-foreground">Recent Applications</h2>
-            </div>
-            {hasApplications && (
-              <Link
-                href="/applications"
-                className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors duration-200 group"
-              >
-                View all
-                <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
-              </Link>
-            )}
-          </div>
-
-          {hasApplications ? (
-            <div className="divide-y divide-border/30">
-              {applications.slice(0, 5).map((app: any) => {
-                const config = statusConfig[app.status] || statusConfig.pending;
-                return (
-                  <div
-                    key={app.id}
-                    className="flex items-center justify-between p-4 hover:bg-secondary/30 transition-colors duration-200"
-                  >
-                    <div className="flex items-center gap-4 min-w-0">
-                      <div className="w-10 h-10 bg-secondary/60 rounded-xl flex items-center justify-center shrink-0">
-                        <span className="text-sm font-semibold text-foreground/80">
-                          {app.company_name?.charAt(0) || 'J'}
-                        </span>
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">
-                          {app.job_title}
-                        </p>
-                        <p className="text-xs text-muted-foreground/70 truncate">
-                          {app.company_name}
-                        </p>
-                      </div>
-                    </div>
-                    <span
-                      className={cn(
-                        'text-xs px-2.5 py-1 rounded-full font-medium flex items-center gap-1.5 shrink-0 ml-3',
-                        config.bg,
-                        config.text
-                      )}
-                    >
-                      <span className={cn('w-1.5 h-1.5 rounded-full', config.dot)} />
-                      {app.status?.replace(/_/g, ' ')}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="p-14 flex flex-col items-center text-center">
-              <div className="w-14 h-14 rounded-2xl bg-secondary/60 flex items-center justify-center mb-5">
-                <Inbox className="w-7 h-7 text-muted-foreground/50" />
+              <div>
+                <h2 className="font-semibold text-foreground text-sm">Setup Progress</h2>
+                <p className="text-xs text-muted-foreground/70">
+                  {completedCount}/{setupItems.length} completed
+                </p>
               </div>
-              <h3 className="font-semibold text-foreground text-lg mb-2">No applications yet</h3>
-              <p className="text-sm text-muted-foreground/70 max-w-xs">
-                Start the agent to begin discovering and applying to jobs automatically.
-              </p>
             </div>
-          )}
-        </div>
 
-        {/* Setup Progress (1/3) - hidden when all items completed */}
-        {completedCount < setupItems.length && <div className="bg-card rounded-2xl border border-border/40 p-5 shadow-sm">
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <AlertCircle className="w-4 h-4 text-primary" />
-            </div>
-            <h2 className="font-semibold text-foreground">Setup Progress</h2>
-          </div>
-
-          <p className="text-xs text-muted-foreground/70 mb-5 ml-11">
-            {completedCount}/{setupItems.length} completed
-          </p>
-
-          {/* Progress bar */}
-          <div className="w-full h-1.5 bg-secondary/80 rounded-full mb-6 overflow-hidden">
-            <div
-              className="h-full bg-primary rounded-full transition-all duration-500"
-              style={{ width: `${(completedCount / setupItems.length) * 100}%` }}
-            />
-          </div>
-
-          <div className="space-y-1">
-            {setupItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'flex items-center gap-3 w-full p-3 rounded-xl text-sm transition-all duration-200 group',
-                  item.done
-                    ? 'text-muted-foreground'
-                    : 'text-foreground hover:bg-secondary/40 border border-transparent hover:border-border/30'
-                )}
-              >
-                <div
+            <div className="flex flex-wrap items-center gap-2 flex-1">
+              {setupItems.map((item) => (
+                <span
+                  key={item.href}
                   className={cn(
-                    'w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-colors duration-200',
+                    'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors',
                     item.done
                       ? 'bg-emerald-500/10 text-emerald-500'
-                      : 'bg-secondary/80 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'
+                      : 'bg-secondary text-muted-foreground'
                   )}
                 >
                   {item.done ? (
-                    <Check className="w-3.5 h-3.5" />
+                    <Check className="w-3 h-3" />
                   ) : (
                     <div className="w-1.5 h-1.5 rounded-full bg-current opacity-40" />
                   )}
-                </div>
-                <span className={cn('font-medium', item.done && 'line-through opacity-60')}>
                   {item.label}
                 </span>
-                {!item.done && (
-                  <ArrowUpRight className="w-3.5 h-3.5 ml-auto text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                )}
-              </Link>
-            ))}
-          </div>
-
-          {completedCount === setupItems.length && (
-            <div className="mt-5 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/15">
-              <p className="text-xs text-emerald-500 font-medium flex items-center gap-2">
-                <Check className="w-3.5 h-3.5" />
-                All set! You are ready to start the agent.
-              </p>
+              ))}
             </div>
+
+            <Link
+              href="/setup"
+              className="shrink-0 text-xs font-semibold text-primary hover:text-primary/80 flex items-center gap-1 transition-colors"
+            >
+              Complete Setup
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Recent Applications */}
+      <div className="bg-card rounded-2xl border border-border/40 overflow-hidden shadow-sm">
+        <div className="flex items-center justify-between p-5 border-b border-border/30">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+              <Briefcase className="w-4 h-4 text-indigo-500" />
+            </div>
+            <h2 className="font-semibold text-foreground">Recent Applications</h2>
+          </div>
+          {hasApplications && (
+            <Link
+              href="/applications"
+              className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors duration-200 group"
+            >
+              View all
+              <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
+            </Link>
           )}
-        </div>}
+        </div>
+
+        {hasApplications ? (
+          <div className="divide-y divide-border/30">
+            {applications.slice(0, 5).map((app: any) => {
+              const config = statusConfig[app.status] || statusConfig.pending;
+              return (
+                <div
+                  key={app.id}
+                  className="flex items-center justify-between p-4 hover:bg-secondary/30 transition-colors duration-200"
+                >
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="w-10 h-10 bg-secondary/60 rounded-xl flex items-center justify-center shrink-0">
+                      <span className="text-sm font-semibold text-foreground/80">
+                        {app.company_name?.charAt(0) || 'J'}
+                      </span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {app.job_title}
+                      </p>
+                      <p className="text-xs text-muted-foreground/70 truncate">
+                        {app.company_name}
+                      </p>
+                    </div>
+                  </div>
+                  <span
+                    className={cn(
+                      'text-xs px-2.5 py-1 rounded-full font-medium flex items-center gap-1.5 shrink-0 ml-3',
+                      config.bg,
+                      config.text
+                    )}
+                  >
+                    <span className={cn('w-1.5 h-1.5 rounded-full', config.dot)} />
+                    {app.status?.replace(/_/g, ' ')}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="p-14 flex flex-col items-center text-center">
+            <div className="w-14 h-14 rounded-2xl bg-secondary/60 flex items-center justify-center mb-5">
+              <Inbox className="w-7 h-7 text-muted-foreground/50" />
+            </div>
+            <h3 className="font-semibold text-foreground text-lg mb-2">No applications yet</h3>
+            <p className="text-sm text-muted-foreground/70 max-w-xs">
+              Start the agent to begin discovering and applying to jobs automatically.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

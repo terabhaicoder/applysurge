@@ -56,8 +56,10 @@ export function useAuth() {
       password: data.password,
       full_name: data.full_name,
     });
-    router.push(ROUTES.VERIFY_EMAIL);
-  }, [router]);
+    // No verification email is sent (and login doesn't require verification),
+    // so log the user straight in instead of showing a "check your email" screen.
+    await login({ email: data.email, password: data.password });
+  }, [login]);
 
   const logout = useCallback(async () => {
     // Stop agent before clearing auth (best-effort, don't block logout)
@@ -68,7 +70,7 @@ export function useAuth() {
     }
     clearTokens();
     storeLogout();
-    router.push(ROUTES.LOGIN);
+    router.push("/");
   }, [router, storeLogout]);
 
   const fetchUser = useCallback(async () => {

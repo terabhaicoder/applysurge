@@ -12,7 +12,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN adduser --disabled-password --gecos '' appuser
+RUN adduser --disabled-password --gecos '' appuser \
+    && mkdir -p /app/storage/resumes /app/storage/screenshots \
+    && chown -R appuser:appuser /app/storage
 USER appuser
 
 EXPOSE 8000

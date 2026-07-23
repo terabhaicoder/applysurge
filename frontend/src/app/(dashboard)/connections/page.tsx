@@ -17,28 +17,20 @@ export default function ConnectionsPage() {
   });
 
   const [showLinkedIn, setShowLinkedIn] = useState(false);
-  const [showNaukri, setShowNaukri] = useState(false);
   const [linkedInForm, setLinkedInForm] = useState({ email: '', password: '' });
-  const [naukriForm, setNaukriForm] = useState({ email: '', password: '' });
   const [showLinkedInPassword, setShowLinkedInPassword] = useState(false);
-  const [showNaukriPassword, setShowNaukriPassword] = useState(false);
   const [editingLinkedIn, setEditingLinkedIn] = useState(false);
-  const [editingNaukri, setEditingNaukri] = useState(false);
   const [loadingLinkedInCreds, setLoadingLinkedInCreds] = useState(false);
-  const [loadingNaukriCreds, setLoadingNaukriCreds] = useState(false);
 
   const connectMutation = useMutation({
     mutationFn: ({ platform, data }: { platform: string; data: { email: string; password: string } }) =>
       api.post(`/credentials/${platform}`, { username: data.email, password: data.password }),
-    onSuccess: (_, { platform }) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['credentials'] });
-      addToast({ title: `${platform} updated successfully`, variant: 'success' });
+      addToast({ title: 'LinkedIn connected successfully', variant: 'success' });
       setShowLinkedIn(false);
-      setShowNaukri(false);
       setEditingLinkedIn(false);
-      setEditingNaukri(false);
       setLinkedInForm({ email: '', password: '' });
-      setNaukriForm({ email: '', password: '' });
     },
     onError: (error: any) => {
       const message = error.response?.data?.detail || 'Connection failed. Check your credentials.';
@@ -48,11 +40,11 @@ export default function ConnectionsPage() {
 
   const disconnectMutation = useMutation({
     mutationFn: (platform: string) => api.delete(`/credentials/${platform}`),
-    onSuccess: (_, platform) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['credentials'] });
-      addToast({ title: 'Disconnected', variant: 'success' });
-      if (platform === 'linkedin') { setEditingLinkedIn(false); setLinkedInForm({ email: '', password: '' }); }
-      if (platform === 'naukri') { setEditingNaukri(false); setNaukriForm({ email: '', password: '' }); }
+      addToast({ title: 'LinkedIn disconnected', variant: 'success' });
+      setEditingLinkedIn(false);
+      setLinkedInForm({ email: '', password: '' });
     },
     onError: (error: any) => {
       const message = error.response?.data?.detail || 'Failed to disconnect. Please try again.';
@@ -78,31 +70,10 @@ export default function ConnectionsPage() {
     setEditingLinkedIn(true);
   };
 
-  const toggleEditNaukri = async () => {
-    if (editingNaukri) {
-      setEditingNaukri(false);
-      setNaukriForm({ email: '', password: '' });
-      return;
-    }
-    setLoadingNaukriCreds(true);
-    try {
-      const res = await api.get('/credentials/naukri/detail');
-      setNaukriForm({ email: res.data.email, password: res.data.password });
-    } catch {
-      const cred = credentials?.find((c: any) => c.platform === 'naukri');
-      setNaukriForm({ email: cred?.username || '', password: '' });
-    }
-    setLoadingNaukriCreds(false);
-    setEditingNaukri(true);
-  };
-
-  const getStatus = (platform: string) => {
-    const cred = credentials?.find((c: any) => c.platform === platform);
+  const linkedIn = (() => {
+    const cred = credentials?.find((c: any) => c.platform === 'linkedin');
     return cred ? { connected: true, valid: cred.is_valid } : { connected: false, valid: false };
-  };
-
-  const linkedIn = getStatus('linkedin');
-  const naukri = getStatus('naukri');
+  })();
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -114,7 +85,7 @@ export default function ConnectionsPage() {
           </div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Connections</h1>
         </div>
-        <p className="text-muted-foreground text-sm mt-1 ml-12">Connect your job platform accounts for automated applications</p>
+        <p className="text-muted-foreground text-sm mt-1 ml-12">Connect your LinkedIn account for automated Easy Apply</p>
       </div>
 
       {/* LinkedIn */}
@@ -237,127 +208,6 @@ export default function ConnectionsPage() {
             >
               {connectMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
               Connect LinkedIn
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Naukri */}
-      <div className="bg-card rounded-2xl border border-border/50 p-5 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 bg-violet-500/10 rounded-xl flex items-center justify-center">
-              <span className="text-violet-400 font-bold text-sm">N</span>
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground">Naukri.com</h3>
-              <p className="text-xs text-muted-foreground">Quick Apply automation</p>
-            </div>
-          </div>
-          {naukri.connected ? (
-            <div className="flex items-center gap-2">
-              <span className="flex items-center gap-1.5 text-sm text-emerald-400 bg-emerald-400/10 px-3 py-1.5 rounded-full">
-                <Check className="w-3.5 h-3.5" /> Connected
-              </span>
-              <button
-                onClick={toggleEditNaukri}
-                disabled={loadingNaukriCreds}
-                className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors"
-              >
-                {loadingNaukriCreds ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronDown className={cn("w-4 h-4 transition-transform", editingNaukri && "rotate-180")} />}
-              </button>
-              <button
-                onClick={() => disconnectMutation.mutate('naukri')}
-                className="p-2 text-muted-foreground hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setShowNaukri(!showNaukri)}
-              className={cn(
-                'px-5 py-2.5 text-sm font-medium rounded-xl flex items-center gap-2 transition-all',
-                showNaukri
-                  ? 'bg-secondary text-foreground'
-                  : 'bg-violet-500 hover:bg-violet-600 text-white shadow-lg shadow-violet-500/20'
-              )}
-            >
-              <Link2 className="w-4 h-4" />
-              {showNaukri ? 'Cancel' : 'Connect'}
-            </button>
-          )}
-        </div>
-
-        {editingNaukri && naukri.connected && (
-          <div className="pt-4 border-t border-border/50 space-y-4">
-            <p className="text-xs text-muted-foreground">Update your Naukri credentials</p>
-            <input
-              type="email"
-              value={naukriForm.email}
-              onChange={(e) => setNaukriForm(prev => ({ ...prev, email: e.target.value }))}
-              placeholder="Naukri email"
-              className="w-full px-4 py-2.5 bg-secondary border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
-            />
-            <div className="relative">
-              <input
-                type={showNaukriPassword ? 'text' : 'password'}
-                value={naukriForm.password}
-                onChange={(e) => setNaukriForm(prev => ({ ...prev, password: e.target.value }))}
-                placeholder="Password"
-                className="w-full px-4 py-2.5 pr-11 bg-secondary border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
-              />
-              <button
-                type="button"
-                onClick={() => setShowNaukriPassword(!showNaukriPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {showNaukriPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-            <button
-              onClick={() => connectMutation.mutate({ platform: 'naukri', data: naukriForm })}
-              disabled={connectMutation.isPending || !naukriForm.email.trim() || !naukriForm.password.trim()}
-              className="w-full py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/20 hover:shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
-            >
-              {connectMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-              Update
-            </button>
-          </div>
-        )}
-
-        {showNaukri && !naukri.connected && (
-          <div className="pt-4 border-t border-border/50 space-y-4">
-            <input
-              type="email"
-              value={naukriForm.email}
-              onChange={(e) => setNaukriForm(prev => ({ ...prev, email: e.target.value }))}
-              placeholder="Naukri email"
-              className="w-full px-4 py-2.5 bg-secondary border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
-            />
-            <div className="relative">
-              <input
-                type={showNaukriPassword ? 'text' : 'password'}
-                value={naukriForm.password}
-                onChange={(e) => setNaukriForm(prev => ({ ...prev, password: e.target.value }))}
-                placeholder="Naukri password"
-                className="w-full px-4 py-2.5 pr-11 bg-secondary border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
-              />
-              <button
-                type="button"
-                onClick={() => setShowNaukriPassword(!showNaukriPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {showNaukriPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-            <button
-              onClick={() => connectMutation.mutate({ platform: 'naukri', data: naukriForm })}
-              disabled={connectMutation.isPending || !naukriForm.email.trim() || !naukriForm.password.trim()}
-              className="w-full py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/20 hover:shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
-            >
-              {connectMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-              Connect Naukri
             </button>
           </div>
         )}

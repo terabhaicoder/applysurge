@@ -11,7 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_active_user, get_db
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import ConflictError, NotFoundError
 from app.models.credentials import PlatformCredentials
 from app.models.user import User
 from app.schemas.common import MessageResponse
@@ -152,6 +152,19 @@ async def _add_credential(
     data: CredentialCreate,
 ) -> CredentialResponse:
     """Helper to add or update platform credentials."""
+    # Check if this platform username is already used by a different user
+    taken_check = await db.execute(
+        select(PlatformCredentials).where(
+            PlatformCredentials.platform == platform,
+            PlatformCredentials.platform_email == data.username,
+            PlatformCredentials.user_id != user_id,
+        )
+    )
+    if taken_check.scalar_one_or_none():
+        raise ConflictError(
+            f"This {platform.title()} account is already connected to another Apply Surge user"
+        )
+
     result = await db.execute(
         select(PlatformCredentials).where(
             PlatformCredentials.user_id == user_id,

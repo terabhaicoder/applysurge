@@ -193,6 +193,7 @@ def update_daily_stats(self):
 
             except Exception as e:
                 logger.error(f"Failed to update stats for user {user_id}: {e}")
+                session.rollback()
                 continue
 
         session.commit()

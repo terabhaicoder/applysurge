@@ -10,9 +10,7 @@ import { cn } from '@/lib/utils';
 const STATUS_OPTIONS = [
   { value: 'all', label: 'All' },
   { value: 'applied', label: 'Applied' },
-  { value: 'response_received', label: 'Response' },
   { value: 'interview_scheduled', label: 'Interview' },
-  { value: 'rejected', label: 'Rejected' },
   { value: 'failed', label: 'Failed' },
 ];
 
@@ -48,7 +46,7 @@ export default function ApplicationsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Applications</h1>
-          <p className="text-muted-foreground text-sm mt-1">Track all your job applications</p>
+          <p className="text-muted-foreground text-sm mt-1">Track your LinkedIn Easy Apply applications</p>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-card border border-border/50">
           <FileText className="w-4 h-4 text-primary" />
@@ -149,8 +147,8 @@ export default function ApplicationsPage() {
                         </div>
                       </td>
                       <td className="px-5 py-4 hidden md:table-cell">
-                        <span className="text-xs text-muted-foreground capitalize px-2.5 py-1 bg-secondary rounded-lg">
-                          {app.application_method?.replace(/_/g, ' ')}
+                        <span className="text-xs text-muted-foreground px-2.5 py-1 bg-blue-500/10 text-blue-400 rounded-lg inline-flex items-center gap-1.5">
+                          <span className="font-bold">in</span> Easy Apply
                         </span>
                       </td>
                       <td className="px-5 py-4">

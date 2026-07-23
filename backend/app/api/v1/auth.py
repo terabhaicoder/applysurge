@@ -33,16 +33,13 @@ async def register(
     data: UserRegister,
     db: AsyncSession = Depends(get_db),
 ):
-    """Register a new user account and send verification email."""
+    """Register a new user account."""
     service = AuthService(db)
     user = await service.register(
         email=data.email,
         password=data.password,
         full_name=data.full_name,
     )
-
-    # Generate verification token (email sending handled separately)
-    await service.create_email_verification_token(user.id)
 
     return user
 

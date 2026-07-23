@@ -465,24 +465,38 @@ def run_agent_session(self, user_id: str):
             _log_agent_activity(user_id, "discovering_jobs", "Searching for new jobs...")
 
             try:
+                # Dispatch discovery to the scraping queue (worker-1) and wait.
+                # Previously used .apply() which ran synchronously inside
+                # worker-browser, causing asyncio event loop conflicts.
                 from worker.tasks.job_discovery import discover_jobs_for_user
-                discover_jobs_for_user.apply(args=[user_id])
+                discovery_result = discover_jobs_for_user.apply_async(args=[user_id])
+                discovery_outcome = discovery_result.get(timeout=600)
+                logger.info(f"Discovery completed for {user_id}: {discovery_outcome}")
+                _log_agent_activity(
+                    user_id, "discovery_complete",
+                    f"Job discovery finished — found {discovery_outcome.get('new_jobs', 0)} new jobs",
+                )
 
+                # Dispatch matching to the default queue (worker-1) and wait.
                 from worker.tasks.job_matching import match_jobs_for_user
-                match_jobs_for_user.apply(args=[user_id])
+                matching_result = match_jobs_for_user.apply_async(args=[user_id])
+                matching_outcome = matching_result.get(timeout=300)
+                logger.info(f"Matching completed for {user_id}: {matching_outcome}")
+                _log_agent_activity(user_id, "matching_complete", "Job matching finished")
 
-                # CRITICAL: Re-set event loop after discovery/matching.
-                # They use asyncio.run() internally which clears the loop.
-                asyncio.set_event_loop(loop)
-
-                time.sleep(10)
                 session.commit()
                 pending_jobs = _get_pending_jobs(user_id, remaining, session)
                 logger.info(f"After discovery+matching: found {len(pending_jobs)} pending jobs")
 
             except Exception as e:
-                logger.error(f"Job discovery failed for {user_id}: {e}")
+                logger.error(f"Job discovery/matching failed for {user_id}: {e}", exc_info=True)
                 _log_agent_activity(user_id, "discovery_error", f"Job discovery error: {str(e)}")
+                # Still try to get any jobs that might have been discovered before the error
+                try:
+                    session.rollback()
+                    pending_jobs = _get_pending_jobs(user_id, remaining, session)
+                except Exception:
+                    pass
 
         if not pending_jobs:
             _log_agent_activity(user_id, "no_jobs_found", "No matching jobs found in this run.")

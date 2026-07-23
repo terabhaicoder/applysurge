@@ -73,23 +73,23 @@ export default function LandingPage() {
             </Link>
 
             <div className="hidden md:flex items-center gap-8">
-              <Link
-                href="/features"
+              <a
+                href="#features"
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
                 Features
-              </Link>
+              </a>
+              <a
+                href="#how-it-works"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                How It Works
+              </a>
               <Link
                 href="/pricing"
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
                 Pricing
-              </Link>
-              <Link
-                href="/about"
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-              >
-                About
               </Link>
             </div>
 
@@ -229,7 +229,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Features ─── */}
-      <section className="py-24 lg:py-32 px-6 relative">
+      <section id="features" className="py-24 lg:py-32 px-6 relative scroll-mt-20">
         <div className="absolute inset-0 bg-dot-pattern opacity-[0.02] pointer-events-none" />
         <div className="max-w-5xl mx-auto relative z-10">
           <div className="text-center mb-16">
@@ -281,7 +281,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── How It Works ─── */}
-      <section className="py-24 lg:py-32 px-6 bg-secondary/30 relative">
+      <section id="how-it-works" className="py-24 lg:py-32 px-6 bg-secondary/30 relative scroll-mt-20">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="font-display text-3xl md:text-5xl font-extrabold tracking-tight text-foreground">
@@ -432,7 +432,7 @@ export default function LandingPage() {
       {/* ─── Footer ─── */}
       <footer className="border-t border-border/50 pt-16 pb-10 px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-10 mb-14">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-14">
             {/* Brand */}
             <div className="col-span-2">
               <LogoFull iconSize={24} />
@@ -448,35 +448,9 @@ export default function LandingPage() {
                 Product
               </h4>
               <ul className="space-y-3">
-                {['Features', 'Pricing', 'Changelog'].map((item) => (
-                  <li key={item}>
-                    <Link
-                      href={`/${item.toLowerCase()}`}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {item}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Company */}
-            <div>
-              <h4 className="font-display font-semibold text-sm text-foreground mb-4">
-                Company
-              </h4>
-              <ul className="space-y-3">
-                {['About', 'Blog', 'Careers'].map((item) => (
-                  <li key={item}>
-                    <Link
-                      href={`/${item.toLowerCase()}`}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {item}
-                    </Link>
-                  </li>
-                ))}
+                <li><a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a></li>
+                <li><a href="#how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors">How It Works</a></li>
+                <li><Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</Link></li>
               </ul>
             </div>
 
@@ -503,17 +477,7 @@ export default function LandingPage() {
           {/* Bottom bar */}
           <div className="border-t border-border/50 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-xs text-muted-foreground">
-              &copy; {new Date().getFullYear()} Apply Surge. All rights
-              reserved. Built by{' '}
-              <a
-                href="https://paarthpanthri.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
-              >
-                Paarth Panthri
-              </a>
-              .
+              &copy; {new Date().getFullYear()} Augustinnovate Pvt. Ltd. All rights reserved.
             </p>
             <div className="flex items-center gap-6">
               {/* Twitter / X */}
