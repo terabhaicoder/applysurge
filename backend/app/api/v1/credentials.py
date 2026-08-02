@@ -17,6 +17,7 @@ from app.models.user import User
 from app.schemas.common import MessageResponse
 from app.schemas.credentials import (
     CredentialCreate,
+    CredentialCreateCookie,
     CredentialDetailResponse,
     CredentialResponse,
     CredentialValidateResponse,
@@ -55,6 +56,59 @@ async def add_linkedin_credentials(
 
 
 @router.post(
+    "/linkedin/cookie",
+    response_model=CredentialResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def add_linkedin_cookie(
+    data: CredentialCreateCookie,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Store LinkedIn li_at session cookie for authentication (bypasses CAPTCHA)."""
+    import json
+
+    result = await db.execute(
+        select(PlatformCredentials).where(
+            PlatformCredentials.user_id == current_user.id,
+            PlatformCredentials.platform == "linkedin",
+        )
+    )
+    existing = result.scalar_one_or_none()
+
+    # Build Playwright-format cookies from the li_at value
+    cookies = json.dumps([{
+        "name": "li_at",
+        "value": data.cookie.strip(),
+        "domain": ".linkedin.com",
+        "path": "/",
+        "httpOnly": True,
+        "secure": True,
+        "sameSite": "None",
+    }])
+
+    if existing:
+        existing.set_cookies(cookies)
+        existing.encrypted_password = None  # Clear password — cookie takes priority
+        existing.is_verified = False
+        await db.flush()
+        await db.refresh(existing)
+        return _to_credential_response(existing)
+
+    cred = PlatformCredentials(
+        user_id=current_user.id,
+        platform="linkedin",
+        platform_username="cookie-auth",
+        platform_email="cookie-auth",
+    )
+    cred.set_cookies(cookies)
+    db.add(cred)
+    await db.flush()
+    await db.refresh(cred)
+    return _to_credential_response(cred)
+
+
+@router.post(
     "/naukri",
     response_model=CredentialResponse,
     status_code=status.HTTP_201_CREATED,
@@ -85,10 +139,35 @@ async def get_credential_detail(
     if not cred:
         raise NotFoundError(f"Credentials for {platform}")
 
+    has_cookie = cred.get_cookies() is not None
+    # Don't show "cookie-auth" sentinel value as email
+    raw_email = cred.platform_email or cred.platform_username or ""
+    email = "" if raw_email == "cookie-auth" else raw_email
+
+    # Build masked cookie for display
+    masked_cookie = ""
+    if has_cookie:
+        try:
+            import json
+            cookies_json = cred.get_cookies()
+            if cookies_json:
+                cookies_list = json.loads(cookies_json)
+                if cookies_list and isinstance(cookies_list, list):
+                    val = cookies_list[0].get("value", "")
+                    if len(val) > 8:
+                        masked_cookie = val[:4] + "..." + val[-4:]
+                    elif val:
+                        masked_cookie = val[:2] + "..."
+        except Exception:
+            masked_cookie = "saved"
+
     return CredentialDetailResponse(
         platform=cred.platform,
-        email=cred.platform_email or cred.platform_username or "",
+        email=email,
         password=cred.get_password() or "",
+        has_cookie=has_cookie,
+        masked_cookie=masked_cookie,
+        auth_method="cookie" if has_cookie else "password",
     )
 
 
@@ -197,12 +276,18 @@ async def _add_credential(
 
 def _to_credential_response(cred: PlatformCredentials) -> CredentialResponse:
     """Convert model to response schema."""
+    has_cookie = cred.get_cookies() is not None
+    raw_username = cred.platform_username or ""
+    # Don't expose "cookie-auth" sentinel value
+    username = "" if raw_username == "cookie-auth" else raw_username
     return CredentialResponse(
         id=cred.id,
         user_id=cred.user_id,
         platform=cred.platform,
-        username=cred.platform_username or "",
+        username=username,
         is_valid=cred.is_verified,
+        has_cookie=has_cookie,
+        auth_method="cookie" if has_cookie else "password",
         last_validated_at=cred.last_verified_at,
         created_at=cred.created_at,
         updated_at=cred.updated_at,

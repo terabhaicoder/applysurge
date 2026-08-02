@@ -105,3 +105,19 @@ async def get_agent_logs(
     r.close()
 
     return [json.loads(log) for log in raw_logs]
+
+
+@router.get("/screenshot")
+async def get_agent_screenshot(
+    current_user: User = Depends(get_current_active_user),
+):
+    """Get the latest live browser screenshot from Redis."""
+    import redis as redis_lib
+    from app.core.config import settings as app_settings
+
+    r = redis_lib.from_url(app_settings.REDIS_URL, decode_responses=True)
+    screenshot_key = f"jobpilot:agent:live_screenshot:{current_user.id}"
+    screenshot = r.get(screenshot_key)
+    r.close()
+
+    return {"screenshot": screenshot}

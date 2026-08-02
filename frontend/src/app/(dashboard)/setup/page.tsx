@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -19,6 +19,7 @@ import {
   File,
   ChevronRight,
   User,
+  Cookie,
 } from 'lucide-react';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -211,6 +212,8 @@ export default function SetupPage() {
   /* -- linkedin state ---------------------------------------------------- */
   const [linkedinEmail, setLinkedinEmail] = useState('');
   const [linkedinPassword, setLinkedinPassword] = useState('');
+  const [linkedinCookie, setLinkedinCookie] = useState('');
+  const [linkedinAuthMethod, setLinkedinAuthMethod] = useState<'cookie' | 'password'>('cookie');
   const [showPassword, setShowPassword] = useState(false);
   const [linkedinConnected, setLinkedinConnected] = useState(false);
 
@@ -219,16 +222,28 @@ export default function SetupPage() {
     queryFn: () => api.get('/credentials/').then((r) => r.data),
   });
   const hasLinkedIn = linkedinConnected || (Array.isArray(existingCreds) && existingCreds.some((c: any) => c.platform === 'linkedin'));
+  const linkedinEmail_display = (() => {
+    if (!existingCreds) return '';
+    const cred = existingCreds.find((c: any) => c.platform === 'linkedin');
+    return cred?.username || '';
+  })();
 
   const linkedinMutation = useMutation({
-    mutationFn: () =>
-      api.post('/credentials/linkedin', { username: linkedinEmail, password: linkedinPassword }),
+    mutationFn: () => {
+      if (linkedinAuthMethod === 'cookie') {
+        return api.post('/credentials/linkedin/cookie', { cookie: linkedinCookie.trim() });
+      }
+      return api.post('/credentials/linkedin', { username: linkedinEmail, password: linkedinPassword });
+    },
     onSuccess: () => {
       setLinkedinConnected(true);
       queryClient.invalidateQueries({ queryKey: ['credentials'] });
       addToast({ title: 'LinkedIn connected', variant: 'success' });
     },
-    onError: () => addToast({ title: 'Failed to connect LinkedIn', variant: 'error' }),
+    onError: (error: any) => {
+      const message = error.response?.data?.detail || 'Failed to connect LinkedIn';
+      addToast({ title: message, variant: 'error' });
+    },
   });
 
   /* -- profile state ----------------------------------------------------- */
@@ -258,13 +273,36 @@ export default function SetupPage() {
     onError: () => addToast({ title: 'Failed to save profile', variant: 'error' }),
   });
 
+  /* -- pre-populate from existing data ----------------------------------- */
+  useEffect(() => {
+    if (existingPrefs && !preferencesSet) {
+      const titles = existingPrefs.desired_titles;
+      if (Array.isArray(titles) && titles.length > 0) setDesiredTitles(titles);
+      else if (typeof titles === 'string' && titles.length > 2) {
+        try { setDesiredTitles(JSON.parse(titles)); } catch { /* ignore */ }
+      }
+      const locs = existingPrefs.desired_locations || existingPrefs.preferred_locations;
+      if (Array.isArray(locs) && locs.length > 0) setDesiredLocations(locs);
+      if (existingPrefs.remote_preference) setRemotePreference(existingPrefs.remote_preference);
+      if (existingPrefs.min_match_score) setMinMatchScore(existingPrefs.min_match_score);
+    }
+  }, [existingPrefs, preferencesSet]);
+
+  useEffect(() => {
+    if (existingProfile && !profileSet) {
+      if (existingProfile.current_title) setCurrentTitle(existingProfile.current_title);
+      if (existingProfile.years_of_experience != null) setYearsOfExperience(String(existingProfile.years_of_experience));
+      if (existingProfile.current_company) setCurrentCompany(existingProfile.current_company);
+    }
+  }, [existingProfile, profileSet]);
+
   /* -- finish ------------------------------------------------------------ */
   const dismissAndGo = useCallback(() => {
     localStorage.setItem(SETUP_DISMISSED_KEY, '1');
     router.push('/dashboard');
   }, [router]);
 
-  const allDone = hasResume && hasPreferences && hasLinkedIn;
+  const allDone = hasResume && hasPreferences && hasLinkedIn && hasProfile;
 
   return (
     <div className="min-h-screen">
@@ -386,21 +424,14 @@ export default function SetupPage() {
                 </div>
               </div>
 
-              {!hasPreferences ? (
-                <button
-                  onClick={() => prefsMutation.mutate()}
-                  disabled={prefsMutation.isPending || desiredTitles.length === 0}
-                  className="w-full py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  {prefsMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                  Save Preferences
-                </button>
-              ) : (
-                <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-emerald-500 text-sm">
-                  <Check className="w-4 h-4" />
-                  Preferences saved
-                </div>
-              )}
+              <button
+                onClick={() => prefsMutation.mutate()}
+                disabled={prefsMutation.isPending || desiredTitles.length === 0}
+                className="w-full py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {prefsMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                {hasPreferences ? 'Update Preferences' : 'Save Preferences'}
+              </button>
             </div>
           </SetupSection>
 
@@ -416,54 +447,112 @@ export default function SetupPage() {
               <div className="flex items-center gap-3 p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-xl">
                 <Check className="w-5 h-5 text-emerald-500" />
                 <span className="text-sm text-foreground font-medium">LinkedIn connected</span>
-                {linkedinEmail && <span className="text-xs text-muted-foreground ml-auto">{linkedinEmail}</span>}
+                {linkedinEmail_display && <span className="text-xs text-muted-foreground ml-auto">{linkedinEmail_display}</span>}
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">LinkedIn Email</label>
-                  <input
-                    type="email"
-                    value={linkedinEmail}
-                    onChange={(e) => setLinkedinEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    className="w-full bg-secondary border border-border/50 rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
-                  />
+                {/* Auth method toggle */}
+                <div className="flex gap-2 p-1 bg-secondary rounded-xl">
+                  <button
+                    onClick={() => setLinkedinAuthMethod('cookie')}
+                    className={cn(
+                      'flex-1 py-2 text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-all',
+                      linkedinAuthMethod === 'cookie'
+                        ? 'bg-primary text-primary-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    <Cookie className="w-3.5 h-3.5" />
+                    Session Cookie
+                  </button>
+                  <button
+                    onClick={() => setLinkedinAuthMethod('password')}
+                    className={cn(
+                      'flex-1 py-2 text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-all',
+                      linkedinAuthMethod === 'password'
+                        ? 'bg-primary text-primary-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    <Shield className="w-3.5 h-3.5" />
+                    Email & Password
+                  </button>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">LinkedIn Password</label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={linkedinPassword}
-                      onChange={(e) => setLinkedinPassword(e.target.value)}
-                      placeholder="Your LinkedIn password"
-                      className="w-full bg-secondary border border-border/50 rounded-xl px-4 py-2.5 pr-11 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
+                {linkedinAuthMethod === 'cookie' ? (
+                  <>
+                    <div className="p-3 bg-blue-400/10 border border-blue-400/20 rounded-xl text-xs text-blue-400 space-y-2">
+                      <p className="font-medium">How to get your li_at cookie:</p>
+                      <ol className="list-decimal list-inside space-y-1 text-blue-400/80">
+                        <li>Log in to LinkedIn in your browser</li>
+                        <li>Open DevTools (F12) &rarr; Application &rarr; Cookies</li>
+                        <li>Find <code className="bg-blue-400/20 px-1 rounded">li_at</code> and copy its value</li>
+                      </ol>
+                    </div>
+                    <textarea
+                      value={linkedinCookie}
+                      onChange={(e) => setLinkedinCookie(e.target.value)}
+                      placeholder="Paste your li_at cookie value here..."
+                      rows={3}
+                      className="w-full px-4 py-2.5 bg-secondary border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all resize-none font-mono"
                     />
                     <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      onClick={() => linkedinMutation.mutate()}
+                      disabled={linkedinMutation.isPending || !linkedinCookie.trim()}
+                      className="w-full py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {linkedinMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                      Connect LinkedIn
                     </button>
-                  </div>
-                </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">LinkedIn Email</label>
+                      <input
+                        type="email"
+                        value={linkedinEmail}
+                        onChange={(e) => setLinkedinEmail(e.target.value)}
+                        placeholder="you@example.com"
+                        className="w-full bg-secondary border border-border/50 rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
+                      />
+                    </div>
 
-                <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-amber-500/5 border border-amber-500/15 text-muted-foreground text-xs leading-relaxed">
-                  <Shield className="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-500/60" />
-                  Your credentials are encrypted and stored securely. They are only used to automate Easy Apply on your behalf.
-                </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">LinkedIn Password</label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          value={linkedinPassword}
+                          onChange={(e) => setLinkedinPassword(e.target.value)}
+                          placeholder="Your LinkedIn password"
+                          className="w-full bg-secondary border border-border/50 rounded-xl px-4 py-2.5 pr-11 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
 
-                <button
-                  onClick={() => linkedinMutation.mutate()}
-                  disabled={linkedinMutation.isPending || !linkedinEmail.trim() || !linkedinPassword.trim()}
-                  className="w-full py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  {linkedinMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                  Connect LinkedIn
-                </button>
+                    <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-amber-500/5 border border-amber-500/15 text-muted-foreground text-xs leading-relaxed">
+                      <Shield className="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-500/60" />
+                      Your credentials are encrypted and stored securely. They are only used to automate Easy Apply on your behalf.
+                    </div>
+
+                    <button
+                      onClick={() => linkedinMutation.mutate()}
+                      disabled={linkedinMutation.isPending || !linkedinEmail.trim() || !linkedinPassword.trim()}
+                      className="w-full py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {linkedinMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                      Connect LinkedIn
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </SetupSection>
@@ -476,13 +565,7 @@ export default function SetupPage() {
             icon={User}
             done={hasProfile}
           >
-            {hasProfile ? (
-              <div className="flex items-center gap-3 p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-xl">
-                <Check className="w-5 h-5 text-emerald-500" />
-                <span className="text-sm text-foreground font-medium">Profile saved</span>
-              </div>
-            ) : (
-              <div className="space-y-4">
+            <div className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">
                     Current Title <span className="text-primary">*</span>
@@ -530,10 +613,9 @@ export default function SetupPage() {
                   className="w-full py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {profileMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                  Save Profile
+                  {hasProfile ? 'Update Profile' : 'Save Profile'}
                 </button>
               </div>
-            )}
           </SetupSection>
         </div>
 

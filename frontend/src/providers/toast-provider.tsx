@@ -50,11 +50,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             key={toast.id}
             className={`rounded-lg border p-4 shadow-lg animate-in slide-in-from-right-full ${
               toast.variant === 'error'
-                ? 'bg-red-50 border-red-200 text-red-900'
+                ? 'bg-red-50 border-red-200 text-red-900 dark:bg-red-950 dark:border-red-800 dark:text-red-200'
                 : toast.variant === 'success'
-                ? 'bg-green-50 border-green-200 text-green-900'
+                ? 'bg-green-50 border-green-200 text-green-900 dark:bg-emerald-950 dark:border-emerald-800 dark:text-emerald-200'
                 : toast.variant === 'warning'
-                ? 'bg-yellow-50 border-yellow-200 text-yellow-900'
+                ? 'bg-yellow-50 border-yellow-200 text-yellow-900 dark:bg-amber-950 dark:border-amber-800 dark:text-amber-200'
                 : 'bg-card border-border text-foreground'
             }`}
           >

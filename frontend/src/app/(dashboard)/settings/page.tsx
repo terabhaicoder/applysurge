@@ -677,21 +677,29 @@ function LinkedInTab() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ email: '', password: '' });
+  const [cookieValue, setCookieValue] = useState('');
+  const [authMethod, setAuthMethod] = useState<'cookie' | 'password'>('cookie');
+  const [hasSavedCookie, setHasSavedCookie] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loadingCreds, setLoadingCreds] = useState(false);
 
   const connectMutation = useMutation({
-    mutationFn: (data: { email: string; password: string }) =>
-      api.post('/credentials/linkedin', {
+    mutationFn: (data: any) => {
+      if (data.cookie) {
+        return api.post('/credentials/linkedin/cookie', { cookie: data.cookie });
+      }
+      return api.post('/credentials/linkedin', {
         username: data.email,
         password: data.password,
-      }),
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['credentials'] });
       addToast({ title: 'LinkedIn updated successfully', variant: 'success' });
       setShowForm(false);
       setEditing(false);
       setForm({ email: '', password: '' });
+      setCookieValue('');
     },
     onError: (error: any) => {
       const message =
@@ -729,12 +737,21 @@ function LinkedInTab() {
     if (editing) {
       setEditing(false);
       setForm({ email: '', password: '' });
+      setCookieValue('');
       return;
     }
     setLoadingCreds(true);
     try {
       const res = await api.get('/credentials/linkedin/detail');
       setForm({ email: res.data.email, password: res.data.password });
+      if (res.data.has_cookie) {
+        setAuthMethod('cookie');
+        setHasSavedCookie(true);
+        setCookieValue('');
+      } else if (res.data.password) {
+        setHasSavedCookie(false);
+        setAuthMethod('password');
+      }
     } catch {
       setForm({ email: status.username || '', password: '' });
     }
@@ -801,123 +818,247 @@ function LinkedInTab() {
           )}
         </div>
 
-        {/* Connected user email */}
-        {status.connected && !editing && status.username && (
+        {/* Connected user info */}
+        {status.connected && !editing && (
           <p className="text-sm text-muted-foreground">
-            Connected as{' '}
-            <span className="font-medium text-foreground">
-              {status.username}
-            </span>
+            {status.username ? (
+              <>Connected as{' '}<span className="font-medium text-foreground">{status.username}</span></>
+            ) : (
+              <>Connected via <span className="font-medium text-foreground">Session Cookie</span></>
+            )}
           </p>
         )}
 
         {/* Edit form (connected) */}
         {editing && status.connected && (
           <div className="pt-4 border-t border-border/50 space-y-4">
-            <p className="text-xs text-muted-foreground">
-              Update your LinkedIn credentials
-            </p>
-            <input
-              type="email"
-              value={form.email}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, email: e.target.value }))
-              }
-              placeholder="LinkedIn email"
-              className="w-full px-4 py-2.5 bg-secondary border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
-            />
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={form.password}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, password: e.target.value }))
-                }
-                placeholder="Password"
-                className="w-full px-4 py-2.5 pr-11 bg-secondary border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
-              />
+            {/* Auth method toggle */}
+            <div className="flex gap-2 p-1 bg-secondary rounded-xl">
               <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {showPassword ? (
-                  <EyeOff className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
+                onClick={() => setAuthMethod('cookie')}
+                className={cn(
+                  'flex-1 py-2 text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-all',
+                  authMethod === 'cookie'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
                 )}
+              >
+                <Shield className="w-3.5 h-3.5" />
+                Session Cookie (Recommended)
+              </button>
+              <button
+                onClick={() => setAuthMethod('password')}
+                className={cn(
+                  'flex-1 py-2 text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-all',
+                  authMethod === 'password'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <Eye className="w-3.5 h-3.5" />
+                Email &amp; Password
               </button>
             </div>
-            <button
-              onClick={() => connectMutation.mutate(form)}
-              disabled={
-                connectMutation.isPending ||
-                !form.email.trim() ||
-                !form.password.trim()
-              }
-              className="w-full py-2.5 bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
-            >
-              {connectMutation.isPending && (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              )}
-              Update
-            </button>
+
+            {authMethod === 'cookie' ? (
+              <>
+                {hasSavedCookie && !cookieValue.trim() && (
+                  <div className="p-3 bg-emerald-400/10 border border-emerald-400/20 rounded-xl text-xs text-emerald-400 flex items-center gap-2">
+                    <Check className="w-4 h-4 flex-shrink-0" />
+                    <span>A session cookie is saved. Paste a new value below to replace it.</span>
+                  </div>
+                )}
+                <div className="p-3 bg-blue-400/10 border border-blue-400/20 rounded-xl text-xs text-blue-400 space-y-2">
+                  <p className="font-medium">How to get your li_at cookie:</p>
+                  <ol className="list-decimal list-inside space-y-1 text-blue-400/80">
+                    <li>Log in to LinkedIn in your browser</li>
+                    <li>Open DevTools (F12) &rarr; Application &rarr; Cookies</li>
+                    <li>Find <code className="bg-blue-400/20 px-1 rounded">li_at</code> and copy its value</li>
+                  </ol>
+                </div>
+                <textarea
+                  value={cookieValue}
+                  onChange={(e) => setCookieValue(e.target.value)}
+                  placeholder={hasSavedCookie ? "Cookie saved -- paste a new value to replace it" : "Paste your li_at cookie value here..."}
+                  rows={3}
+                  className="w-full px-4 py-2.5 bg-secondary border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all resize-none font-mono"
+                />
+                <button
+                  onClick={() => connectMutation.mutate({ cookie: cookieValue.trim() })}
+                  disabled={connectMutation.isPending || !cookieValue.trim()}
+                  className="w-full py-2.5 bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                >
+                  {connectMutation.isPending && (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  )}
+                  Update
+                </button>
+              </>
+            ) : (
+              <>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, email: e.target.value }))
+                  }
+                  placeholder="LinkedIn email"
+                  className="w-full px-4 py-2.5 bg-secondary border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
+                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={form.password}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, password: e.target.value }))
+                    }
+                    placeholder="Password"
+                    className="w-full px-4 py-2.5 pr-11 bg-secondary border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+                <button
+                  onClick={() => connectMutation.mutate(form)}
+                  disabled={
+                    connectMutation.isPending ||
+                    !form.email.trim() ||
+                    !form.password.trim()
+                  }
+                  className="w-full py-2.5 bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                >
+                  {connectMutation.isPending && (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  )}
+                  Update
+                </button>
+              </>
+            )}
           </div>
         )}
 
         {/* Connect form (not connected) */}
         {showForm && !status.connected && (
           <div className="pt-4 border-t border-border/50 space-y-4">
-            <div className="p-3 bg-amber-400/10 border border-amber-400/20 rounded-xl text-xs text-amber-400 flex items-start gap-2">
-              <Shield className="w-4 h-4 flex-shrink-0 mt-0.5" />
-              Your credentials are encrypted and stored securely. We use them
-              only for automated applications.
-            </div>
-            <input
-              type="email"
-              value={form.email}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, email: e.target.value }))
-              }
-              placeholder="LinkedIn email"
-              className="w-full px-4 py-2.5 bg-secondary border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
-            />
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={form.password}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, password: e.target.value }))
-                }
-                placeholder="LinkedIn password"
-                className="w-full px-4 py-2.5 pr-11 bg-secondary border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
-              />
+            {/* Auth method toggle */}
+            <div className="flex gap-2 p-1 bg-secondary rounded-xl">
               <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {showPassword ? (
-                  <EyeOff className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
+                onClick={() => setAuthMethod('cookie')}
+                className={cn(
+                  'flex-1 py-2 text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-all',
+                  authMethod === 'cookie'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
                 )}
+              >
+                <Shield className="w-3.5 h-3.5" />
+                Session Cookie (Recommended)
+              </button>
+              <button
+                onClick={() => setAuthMethod('password')}
+                className={cn(
+                  'flex-1 py-2 text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-all',
+                  authMethod === 'password'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <Eye className="w-3.5 h-3.5" />
+                Email &amp; Password
               </button>
             </div>
-            <button
-              onClick={() => connectMutation.mutate(form)}
-              disabled={
-                connectMutation.isPending ||
-                !form.email.trim() ||
-                !form.password.trim()
-              }
-              className="w-full py-2.5 bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
-            >
-              {connectMutation.isPending && (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              )}
-              Connect LinkedIn
-            </button>
+
+            {authMethod === 'cookie' ? (
+              <>
+                <div className="p-3 bg-blue-400/10 border border-blue-400/20 rounded-xl text-xs text-blue-400 space-y-2">
+                  <p className="font-medium">How to get your li_at cookie:</p>
+                  <ol className="list-decimal list-inside space-y-1 text-blue-400/80">
+                    <li>Log in to LinkedIn in your browser</li>
+                    <li>Open DevTools (F12) &rarr; Application &rarr; Cookies</li>
+                    <li>Find <code className="bg-blue-400/20 px-1 rounded">li_at</code> and copy its value</li>
+                  </ol>
+                </div>
+                <textarea
+                  value={cookieValue}
+                  onChange={(e) => setCookieValue(e.target.value)}
+                  placeholder="Paste your li_at cookie value here..."
+                  rows={3}
+                  className="w-full px-4 py-2.5 bg-secondary border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all resize-none font-mono"
+                />
+                <button
+                  onClick={() => connectMutation.mutate({ cookie: cookieValue.trim() })}
+                  disabled={connectMutation.isPending || !cookieValue.trim()}
+                  className="w-full py-2.5 bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                >
+                  {connectMutation.isPending && (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  )}
+                  Connect LinkedIn
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="p-3 bg-amber-400/10 border border-amber-400/20 rounded-xl text-xs text-amber-400 flex items-start gap-2">
+                  <Shield className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  Your credentials are encrypted and stored securely. We use them
+                  only for automated applications.
+                </div>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, email: e.target.value }))
+                  }
+                  placeholder="LinkedIn email"
+                  className="w-full px-4 py-2.5 bg-secondary border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
+                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={form.password}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, password: e.target.value }))
+                    }
+                    placeholder="LinkedIn password"
+                    className="w-full px-4 py-2.5 pr-11 bg-secondary border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+                <button
+                  onClick={() => connectMutation.mutate(form)}
+                  disabled={
+                    connectMutation.isPending ||
+                    !form.email.trim() ||
+                    !form.password.trim()
+                  }
+                  className="w-full py-2.5 bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                >
+                  {connectMutation.isPending && (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  )}
+                  Connect LinkedIn
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>

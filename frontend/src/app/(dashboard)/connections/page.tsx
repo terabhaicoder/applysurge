@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Check, Loader2, Trash2, Shield, Link2, Eye, EyeOff, ChevronDown, Cable } from 'lucide-react';
+import { Check, Loader2, Trash2, Shield, Link2, Eye, EyeOff, ChevronDown, Cable, Cookie } from 'lucide-react';
 import api from '@/lib/api';
 import { useToast } from '@/providers/toast-provider';
 import { cn } from '@/lib/utils';
@@ -11,26 +11,33 @@ export default function ConnectionsPage() {
   const queryClient = useQueryClient();
   const { addToast } = useToast();
 
-  const { data: credentials } = useQuery({
+  const { data: credentials, isLoading: credentialsLoading } = useQuery({
     queryKey: ['credentials'],
     queryFn: () => api.get('/credentials/').then((r) => r.data),
   });
 
   const [showLinkedIn, setShowLinkedIn] = useState(false);
   const [linkedInForm, setLinkedInForm] = useState({ email: '', password: '' });
+  const [linkedInCookie, setLinkedInCookie] = useState('');
+  const [authMethod, setAuthMethod] = useState<'cookie' | 'password'>('cookie');
   const [showLinkedInPassword, setShowLinkedInPassword] = useState(false);
   const [editingLinkedIn, setEditingLinkedIn] = useState(false);
   const [loadingLinkedInCreds, setLoadingLinkedInCreds] = useState(false);
 
   const connectMutation = useMutation({
-    mutationFn: ({ platform, data }: { platform: string; data: { email: string; password: string } }) =>
-      api.post(`/credentials/${platform}`, { username: data.email, password: data.password }),
+    mutationFn: ({ platform, data }: { platform: string; data: any }) => {
+      if (data.cookie) {
+        return api.post(`/credentials/${platform}/cookie`, { cookie: data.cookie });
+      }
+      return api.post(`/credentials/${platform}`, { username: data.email, password: data.password });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['credentials'] });
       addToast({ title: 'LinkedIn connected successfully', variant: 'success' });
       setShowLinkedIn(false);
       setEditingLinkedIn(false);
       setLinkedInForm({ email: '', password: '' });
+      setLinkedInCookie('');
     },
     onError: (error: any) => {
       const message = error.response?.data?.detail || 'Connection failed. Check your credentials.';
@@ -52,16 +59,29 @@ export default function ConnectionsPage() {
     },
   });
 
+  const [hasSavedCookie, setHasSavedCookie] = useState(false);
+  const [maskedCookie, setMaskedCookie] = useState('');
+
   const toggleEditLinkedIn = async () => {
     if (editingLinkedIn) {
       setEditingLinkedIn(false);
       setLinkedInForm({ email: '', password: '' });
+      setLinkedInCookie('');
       return;
     }
     setLoadingLinkedInCreds(true);
     try {
       const res = await api.get('/credentials/linkedin/detail');
       setLinkedInForm({ email: res.data.email, password: res.data.password });
+      if (res.data.has_cookie) {
+        setAuthMethod('cookie');
+        setHasSavedCookie(true);
+        setMaskedCookie(res.data.masked_cookie || '');
+        setLinkedInCookie('');
+      } else if (res.data.password) {
+        setAuthMethod('password');
+        setHasSavedCookie(false);
+      }
     } catch {
       const cred = credentials?.find((c: any) => c.platform === 'linkedin');
       setLinkedInForm({ email: cred?.username || '', password: '' });
@@ -100,7 +120,9 @@ export default function ConnectionsPage() {
               <p className="text-xs text-muted-foreground">Easy Apply automation</p>
             </div>
           </div>
-          {linkedIn.connected ? (
+          {credentialsLoading ? (
+            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+          ) : linkedIn.connected ? (
             <div className="flex items-center gap-2">
               <span className="flex items-center gap-1.5 text-sm text-emerald-400 bg-emerald-400/10 px-3 py-1.5 rounded-full">
                 <Check className="w-3.5 h-3.5" /> Connected
@@ -137,78 +159,199 @@ export default function ConnectionsPage() {
 
         {editingLinkedIn && linkedIn.connected && (
           <div className="pt-4 border-t border-border/50 space-y-4">
-            <p className="text-xs text-muted-foreground">Update your LinkedIn credentials</p>
-            <input
-              type="email"
-              value={linkedInForm.email}
-              onChange={(e) => setLinkedInForm(prev => ({ ...prev, email: e.target.value }))}
-              placeholder="LinkedIn email"
-              className="w-full px-4 py-2.5 bg-secondary border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
-            />
-            <div className="relative">
-              <input
-                type={showLinkedInPassword ? 'text' : 'password'}
-                value={linkedInForm.password}
-                onChange={(e) => setLinkedInForm(prev => ({ ...prev, password: e.target.value }))}
-                placeholder="Password"
-                className="w-full px-4 py-2.5 pr-11 bg-secondary border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
-              />
+            {/* Auth method toggle */}
+            <div className="flex gap-2 p-1 bg-secondary rounded-xl">
               <button
-                type="button"
-                onClick={() => setShowLinkedInPassword(!showLinkedInPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => setAuthMethod('cookie')}
+                className={cn(
+                  'flex-1 py-2 text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-all',
+                  authMethod === 'cookie'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
               >
-                {showLinkedInPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                <Cookie className="w-3.5 h-3.5" />
+                Session Cookie
+              </button>
+              <button
+                onClick={() => setAuthMethod('password')}
+                className={cn(
+                  'flex-1 py-2 text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-all',
+                  authMethod === 'password'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <Shield className="w-3.5 h-3.5" />
+                Email & Password
               </button>
             </div>
-            <button
-              onClick={() => connectMutation.mutate({ platform: 'linkedin', data: linkedInForm })}
-              disabled={connectMutation.isPending || !linkedInForm.email.trim() || !linkedInForm.password.trim()}
-              className="w-full py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/20 hover:shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
-            >
-              {connectMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-              Update
-            </button>
+
+            {authMethod === 'cookie' ? (
+              <>
+                {hasSavedCookie && !linkedInCookie.trim() && (
+                  <div className="p-3 bg-emerald-400/10 border border-emerald-400/20 rounded-xl text-xs text-emerald-400 flex items-center gap-2">
+                    <Check className="w-4 h-4 flex-shrink-0" />
+                    <span>Session cookie saved{maskedCookie ? ` (${maskedCookie})` : ''}. Paste a new value below to replace it.</span>
+                  </div>
+                )}
+                <div className="p-3 bg-blue-400/10 border border-blue-400/20 rounded-xl text-xs text-blue-400 space-y-2">
+                  <p className="font-medium">How to get your li_at cookie:</p>
+                  <ol className="list-decimal list-inside space-y-1 text-blue-400/80">
+                    <li>Log in to LinkedIn in your browser</li>
+                    <li>Open DevTools (F12) &rarr; Application &rarr; Cookies</li>
+                    <li>Find <code className="bg-blue-400/20 px-1 rounded">li_at</code> and copy its value</li>
+                  </ol>
+                </div>
+                <textarea
+                  value={linkedInCookie}
+                  onChange={(e) => setLinkedInCookie(e.target.value)}
+                  placeholder={hasSavedCookie ? "Cookie saved — paste a new value to replace it" : "Paste your li_at cookie value here..."}
+                  rows={3}
+                  className="w-full px-4 py-2.5 bg-secondary border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all resize-none font-mono"
+                />
+                <button
+                  onClick={() => connectMutation.mutate({ platform: 'linkedin', data: { cookie: linkedInCookie.trim() } })}
+                  disabled={connectMutation.isPending || !linkedInCookie.trim()}
+                  className="w-full py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/20 hover:shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                >
+                  {connectMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Update Cookie
+                </button>
+              </>
+            ) : (
+              <>
+                <input
+                  type="email"
+                  value={linkedInForm.email}
+                  onChange={(e) => setLinkedInForm(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="LinkedIn email"
+                  className="w-full px-4 py-2.5 bg-secondary border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
+                />
+                <div className="relative">
+                  <input
+                    type={showLinkedInPassword ? 'text' : 'password'}
+                    value={linkedInForm.password}
+                    onChange={(e) => setLinkedInForm(prev => ({ ...prev, password: e.target.value }))}
+                    placeholder="Password"
+                    className="w-full px-4 py-2.5 pr-11 bg-secondary border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowLinkedInPassword(!showLinkedInPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showLinkedInPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <button
+                  onClick={() => connectMutation.mutate({ platform: 'linkedin', data: linkedInForm })}
+                  disabled={connectMutation.isPending || !linkedInForm.email.trim() || !linkedInForm.password.trim()}
+                  className="w-full py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/20 hover:shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                >
+                  {connectMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Update
+                </button>
+              </>
+            )}
           </div>
         )}
 
         {showLinkedIn && !linkedIn.connected && (
           <div className="pt-4 border-t border-border/50 space-y-4">
-            <div className="p-3 bg-amber-400/10 border border-amber-400/20 rounded-xl text-xs text-amber-400 flex items-start gap-2">
-              <Shield className="w-4 h-4 flex-shrink-0 mt-0.5" />
-              Your credentials are encrypted and stored securely. We use them only for automated applications.
-            </div>
-            <input
-              type="email"
-              value={linkedInForm.email}
-              onChange={(e) => setLinkedInForm(prev => ({ ...prev, email: e.target.value }))}
-              placeholder="LinkedIn email"
-              className="w-full px-4 py-2.5 bg-secondary border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
-            />
-            <div className="relative">
-              <input
-                type={showLinkedInPassword ? 'text' : 'password'}
-                value={linkedInForm.password}
-                onChange={(e) => setLinkedInForm(prev => ({ ...prev, password: e.target.value }))}
-                placeholder="LinkedIn password"
-                className="w-full px-4 py-2.5 pr-11 bg-secondary border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
-              />
+            {/* Auth method toggle */}
+            <div className="flex gap-2 p-1 bg-secondary rounded-xl">
               <button
-                type="button"
-                onClick={() => setShowLinkedInPassword(!showLinkedInPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => setAuthMethod('cookie')}
+                className={cn(
+                  'flex-1 py-2 text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-all',
+                  authMethod === 'cookie'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
               >
-                {showLinkedInPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                <Cookie className="w-3.5 h-3.5" />
+                Session Cookie
+              </button>
+              <button
+                onClick={() => setAuthMethod('password')}
+                className={cn(
+                  'flex-1 py-2 text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-all',
+                  authMethod === 'password'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <Shield className="w-3.5 h-3.5" />
+                Email & Password
               </button>
             </div>
-            <button
-              onClick={() => connectMutation.mutate({ platform: 'linkedin', data: linkedInForm })}
-              disabled={connectMutation.isPending || !linkedInForm.email.trim() || !linkedInForm.password.trim()}
-              className="w-full py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/20 hover:shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
-            >
-              {connectMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-              Connect LinkedIn
-            </button>
+
+            {authMethod === 'cookie' ? (
+              <>
+                <div className="p-3 bg-blue-400/10 border border-blue-400/20 rounded-xl text-xs text-blue-400 space-y-2">
+                  <p className="font-medium">How to get your li_at cookie:</p>
+                  <ol className="list-decimal list-inside space-y-1 text-blue-400/80">
+                    <li>Log in to LinkedIn in your browser</li>
+                    <li>Open DevTools (F12) &rarr; Application &rarr; Cookies</li>
+                    <li>Find <code className="bg-blue-400/20 px-1 rounded">li_at</code> and copy its value</li>
+                  </ol>
+                </div>
+                <textarea
+                  value={linkedInCookie}
+                  onChange={(e) => setLinkedInCookie(e.target.value)}
+                  placeholder="Paste your li_at cookie value here..."
+                  rows={3}
+                  className="w-full px-4 py-2.5 bg-secondary border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all resize-none font-mono"
+                />
+                <button
+                  onClick={() => connectMutation.mutate({ platform: 'linkedin', data: { cookie: linkedInCookie.trim() } })}
+                  disabled={connectMutation.isPending || !linkedInCookie.trim()}
+                  className="w-full py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/20 hover:shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                >
+                  {connectMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Connect LinkedIn
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="p-3 bg-amber-400/10 border border-amber-400/20 rounded-xl text-xs text-amber-400 flex items-start gap-2">
+                  <Shield className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  Your credentials are encrypted and stored securely. We use them only for automated applications.
+                </div>
+                <input
+                  type="email"
+                  value={linkedInForm.email}
+                  onChange={(e) => setLinkedInForm(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="LinkedIn email"
+                  className="w-full px-4 py-2.5 bg-secondary border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
+                />
+                <div className="relative">
+                  <input
+                    type={showLinkedInPassword ? 'text' : 'password'}
+                    value={linkedInForm.password}
+                    onChange={(e) => setLinkedInForm(prev => ({ ...prev, password: e.target.value }))}
+                    placeholder="LinkedIn password"
+                    className="w-full px-4 py-2.5 pr-11 bg-secondary border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowLinkedInPassword(!showLinkedInPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showLinkedInPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <button
+                  onClick={() => connectMutation.mutate({ platform: 'linkedin', data: linkedInForm })}
+                  disabled={connectMutation.isPending || !linkedInForm.email.trim() || !linkedInForm.password.trim()}
+                  className="w-full py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/20 hover:shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                >
+                  {connectMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Connect LinkedIn
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>

@@ -62,7 +62,7 @@ export default function ApplicationsPage() {
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder="Search by job title, company..."
             className="w-full pl-11 pr-4 py-3 bg-card border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all"
           />
@@ -92,7 +92,7 @@ export default function ApplicationsPage() {
             <thead>
               <tr className="border-b border-border/50">
                 <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-5 py-4">Job</th>
-                <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-5 py-4 hidden md:table-cell">Method</th>
+                <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-5 py-4 hidden md:table-cell">Match</th>
                 <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-5 py-4">Status</th>
                 <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-5 py-4 hidden sm:table-cell">Date</th>
                 <th className="text-right text-xs font-medium text-muted-foreground uppercase tracking-wider px-5 py-4"></th>
@@ -147,9 +147,18 @@ export default function ApplicationsPage() {
                         </div>
                       </td>
                       <td className="px-5 py-4 hidden md:table-cell">
-                        <span className="text-xs text-muted-foreground px-2.5 py-1 bg-blue-500/10 text-blue-400 rounded-lg inline-flex items-center gap-1.5">
-                          <span className="font-bold">in</span> Easy Apply
-                        </span>
+                        {app.match_score != null ? (
+                          <span className={cn(
+                            'text-xs px-2.5 py-1 rounded-lg font-semibold',
+                            app.match_score >= 80 ? 'bg-emerald-500/10 text-emerald-500' :
+                            app.match_score >= 60 ? 'bg-blue-500/10 text-blue-500' :
+                            'bg-amber-500/10 text-amber-500'
+                          )}>
+                            {Math.round(app.match_score)}%
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        )}
                       </td>
                       <td className="px-5 py-4">
                         <span className={cn('text-xs px-3 py-1.5 rounded-full font-medium inline-flex items-center gap-1.5', config.bg, config.text)}>

@@ -24,7 +24,7 @@ class BaseScraper(ABC):
     BASE_URL: str = ""
     MIN_DELAY: float = 1.0
     MAX_DELAY: float = 3.0
-    PAGE_LOAD_TIMEOUT: int = 30000  # 30 seconds
+    PAGE_LOAD_TIMEOUT: int = 60000  # 60 seconds (headless Docker needs more time)
 
     def __init__(self, user_id: str):
         self.user_id = user_id
@@ -137,14 +137,42 @@ class BaseScraper(ABC):
         return await handler.detect_captcha(self.page)
 
     async def take_screenshot(self, name: str) -> Optional[str]:
-        """Take a screenshot and upload to S3."""
+        """Take a screenshot, upload to storage, and publish to live view."""
         from worker.automation.screenshot_manager import ScreenshotManager
         manager = ScreenshotManager()
-        return await manager.capture_and_upload(
+        url = await manager.capture_and_upload(
             page=self.page,
             user_id=self.user_id,
             name=name,
         )
+        # Also publish a live screenshot for the Live View
+        await self._publish_live_screenshot()
+        return url
+
+    async def _publish_live_screenshot(self):
+        """Capture a viewport screenshot and store in Redis for live view polling."""
+        try:
+            import base64
+            import os
+            import redis as redis_lib
+
+            screenshot_bytes = await self.page.screenshot(type="jpeg", quality=50)
+            if not screenshot_bytes:
+                return
+
+            b64 = base64.b64encode(screenshot_bytes).decode("utf-8")
+            data_url = f"data:image/jpeg;base64,{b64}"
+
+            redis_url = os.environ.get("REDIS_URL", "redis://redis:6379/0")
+            r = redis_lib.from_url(redis_url, decode_responses=True)
+            r.set(
+                f"jobpilot:agent:live_screenshot:{self.user_id}",
+                data_url,
+                ex=120,  # 2 min TTL
+            )
+            r.close()
+        except Exception as e:
+            logger.debug(f"Live screenshot publish failed: {e}")
 
     async def get_page_text(self) -> str:
         """Get all visible text content from the page."""

@@ -22,6 +22,7 @@ class ApplicationResponse(BaseModel):
     job_location: Optional[str] = None
     application_method: Optional[str] = None
     status: str = "pending"
+    match_score: Optional[float] = None
     applied_at: Optional[datetime] = None
     resume_id: Optional[UUID] = None
     cover_letter: Optional[str] = None

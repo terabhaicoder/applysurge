@@ -13,20 +13,28 @@ from worker.celery_app import celery_app
 logger = logging.getLogger(__name__)
 
 
-def _get_db_session():
-    """Create a synchronous database session."""
-    from sqlalchemy import create_engine
-    from sqlalchemy.orm import sessionmaker
-    import os
+import os
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-    database_url = os.environ.get(
-        "DATABASE_URL",
-        "postgresql://jobpilot:jobpilot_pass@postgres:5432/jobpilot_db"
-    )
-    database_url = database_url.replace("postgresql+asyncpg://", "postgresql://")
-    engine = create_engine(database_url, pool_size=5, max_overflow=10)
-    Session = sessionmaker(bind=engine)
-    return Session()
+# Module-level DB engine (shared across all calls to avoid connection pool exhaustion)
+_DATABASE_URL = os.environ.get(
+    "DATABASE_URL",
+    "postgresql://jobpilot:jobpilot_pass@postgres:5432/jobpilot_db"
+).replace("postgresql+asyncpg://", "postgresql://")
+_engine = create_engine(
+    _DATABASE_URL,
+    pool_size=5,
+    max_overflow=10,
+    pool_pre_ping=True,
+    pool_recycle=1800,
+)
+_SessionFactory = sessionmaker(bind=_engine)
+
+
+def _get_db_session():
+    """Create a synchronous database session using the shared engine."""
+    return _SessionFactory()
 
 
 @celery_app.task(
@@ -110,7 +118,7 @@ def send_daily_summaries(self):
                 # Fetch today's stats
                 stats_result = session.execute(text("""
                     SELECT * FROM daily_stats
-                    WHERE user_id = :user_id AND date = :today
+                    WHERE user_id = :user_id AND stats_date = :today
                 """), {"user_id": user["id"], "today": today})
 
                 stats = stats_result.mappings().first()

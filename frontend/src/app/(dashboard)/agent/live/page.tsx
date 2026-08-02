@@ -1,62 +1,36 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useState } from 'react';
 import { ArrowLeft, Monitor, Zap, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { useAgentStore } from '@/stores/agent-store';
-import { useSocketContext } from '@/providers/socket-provider';
 import { useAgent } from '@/hooks/use-agent';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 export default function AgentLivePage() {
-  const { status, logs, liveScreenshot, setLiveScreenshot, addLog, setLogs, clearLogs } = useAgentStore();
-  const { socket } = useSocketContext();
+  const { status } = useAgentStore();
   const { status: agentStatus } = useAgent();
   const isRunning = agentStatus?.is_running || status.is_running;
+  const [clearedAt, setClearedAt] = useState<string | null>(null);
 
-  // Load historical logs from Redis via API
-  const { data: historicalLogs } = useQuery({
+  // Poll for logs from Redis via API
+  const { data: apiLogs } = useQuery({
     queryKey: ['agent-logs-live'],
     queryFn: () => api.get('/agent/logs', { params: { limit: 50 } }).then((r) => r.data),
-    refetchInterval: isRunning ? 3000 : 10000,
+    refetchInterval: isRunning ? 2000 : 10000,
   });
 
-  // Sync historical logs into store if no socket logs exist
-  useEffect(() => {
-    if (historicalLogs && historicalLogs.length > 0 && logs.length === 0) {
-      const mapped = historicalLogs.map((l: any) => ({
-        id: l.id,
-        timestamp: l.timestamp,
-        level: l.is_error ? 'error' : l.action?.includes('complete') ? 'success' : 'info',
-        message: l.message,
-      }));
-      setLogs(mapped);
-    }
-  }, [historicalLogs, logs.length, setLogs]);
+  // Poll for live screenshot from Redis via API
+  const { data: screenshotData } = useQuery({
+    queryKey: ['agent-screenshot'],
+    queryFn: () => api.get('/agent/screenshot').then((r) => r.data),
+    refetchInterval: isRunning ? 3000 : false,
+    enabled: isRunning,
+  });
 
-  useEffect(() => {
-    if (!socket) return;
-
-    socket.on('agent:screenshot', (data: { image: string }) => {
-      setLiveScreenshot(data.image);
-    });
-
-    socket.on('agent:log', (log: { id: string; timestamp: string; level: string; message: string }) => {
-      addLog({
-        id: log.id,
-        timestamp: log.timestamp,
-        level: log.level as 'info' | 'warning' | 'error' | 'success',
-        message: log.message,
-      });
-    });
-
-    return () => {
-      socket.off('agent:screenshot');
-      socket.off('agent:log');
-    };
-  }, [socket, setLiveScreenshot, addLog]);
+  const liveScreenshot = screenshotData?.screenshot || null;
 
   const levelColors: Record<string, { dot: string }> = {
     info: { dot: 'bg-blue-400' },
@@ -65,13 +39,17 @@ export default function AgentLivePage() {
     error: { dot: 'bg-red-400' },
   };
 
-  // Use historical logs if store logs are empty
-  const displayLogs = logs.length > 0 ? logs : (historicalLogs || []).map((l: any) => ({
-    id: l.id,
-    timestamp: l.timestamp,
-    level: l.is_error ? 'error' : l.action?.includes('complete') ? 'success' : 'info',
-    message: l.message,
-  }));
+  // Map API logs to display format, filtering out logs before clear timestamp
+  const displayLogs = (apiLogs || [])
+    .filter((l: any) => !clearedAt || new Date(l.timestamp) > new Date(clearedAt))
+    .map((l: any) => ({
+      id: l.id,
+      timestamp: l.timestamp,
+      level: l.is_error ? 'error' : l.action?.includes('complete') ? 'success' : l.action?.includes('error') || l.action?.includes('fail') ? 'error' : 'info',
+      message: l.message,
+    }));
+
+  const handleClearLogs = () => setClearedAt(new Date().toISOString());
 
   return (
     <div className="space-y-6">
@@ -136,7 +114,7 @@ export default function AgentLivePage() {
             <h2 className="font-semibold text-foreground">Activity Logs</h2>
             <span className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">{displayLogs.length}</span>
           </div>
-          <button onClick={clearLogs} className="p-2 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors" title="Clear logs">
+          <button onClick={handleClearLogs} className="p-2 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors" title="Clear logs">
             <Trash2 className="w-4 h-4" />
           </button>
         </div>

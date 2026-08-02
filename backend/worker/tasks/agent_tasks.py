@@ -159,12 +159,16 @@ def _log_agent_activity(user_id: str, action: str, message: str, details: Dict =
 
 
 def _get_user_credentials(user_id: str, platform: str, session) -> Optional[Dict[str, str]]:
-    """Fetch and decrypt user credentials for a platform."""
+    """Fetch and decrypt user credentials for a platform.
+
+    Returns dict with either 'cookies' key (preferred) or 'email'+'password' keys.
+    """
     from sqlalchemy import text
     from app.core.encryption import decrypt_value
+    import json
 
     result = session.execute(text("""
-        SELECT platform_email, platform_username, encrypted_password
+        SELECT platform_email, platform_username, encrypted_password, encrypted_cookies
         FROM platform_credentials
         WHERE user_id = :user_id AND platform = :platform AND is_active = true
     """), {"user_id": user_id, "platform": platform})
@@ -173,10 +177,22 @@ def _get_user_credentials(user_id: str, platform: str, session) -> Optional[Dict
     if not row:
         return None
 
-    # Decrypt password using the same module that encrypted it
+    # Prefer cookies over password (cookies bypass CAPTCHA)
+    encrypted_cookies = row["encrypted_cookies"]
+    if encrypted_cookies:
+        cookies_str = decrypt_value(encrypted_cookies)
+        if cookies_str:
+            try:
+                cookies = json.loads(cookies_str)
+                logger.info(f"Using cookie-based auth for {user_id}/{platform}")
+                return {"cookies": cookies}
+            except json.JSONDecodeError:
+                logger.warning(f"Invalid cookie JSON for {user_id}/{platform}, falling back to password")
+
+    # Fall back to password-based auth
     encrypted_password = row["encrypted_password"]
     if not encrypted_password:
-        logger.error(f"No encrypted password found for {user_id}/{platform}")
+        logger.error(f"No credentials found for {user_id}/{platform}")
         return None
 
     password = decrypt_value(encrypted_password)
@@ -363,6 +379,197 @@ def _update_job_status(match_id: str, status: str, session, error: str = None):
     session.commit()
 
 
+def _run_discovery_inline(user_id: str, session, loop) -> int:
+    """Run job discovery inline using the agent session's event loop.
+
+    Returns the number of new jobs discovered.
+    Avoids asyncio.run() which would destroy the session's event loop.
+    """
+    from sqlalchemy import text
+    from worker.tasks.job_discovery import (
+        _get_user_credentials,
+        _get_user_preferences,
+        _build_search_params,
+        _scrape_linkedin,
+        _filter_jobs_by_location,
+        _filter_jobs_by_experience,
+        _get_user_experience,
+        _store_discovered_jobs,
+    )
+
+    # Verify user exists
+    user_result = session.execute(text("""
+        SELECT id, email, full_name FROM users
+        WHERE id = :user_id AND is_active = true
+    """), {"user_id": user_id})
+    if not user_result.mappings().first():
+        return 0
+
+    prefs = _get_user_preferences(user_id, session)
+    search_params = _build_search_params(prefs)
+
+    all_jobs = []
+
+    # Scrape LinkedIn
+    linkedin_creds = _get_user_credentials(user_id, "linkedin", session)
+    if linkedin_creds:
+        try:
+            linkedin_jobs = loop.run_until_complete(
+                _scrape_linkedin(user_id, linkedin_creds, search_params)
+            )
+            if search_params.get("easy_apply_only"):
+                for job in linkedin_jobs:
+                    if "easy_apply" not in job:
+                        job["easy_apply"] = True
+            all_jobs.extend(linkedin_jobs)
+            logger.info(f"Found {len(linkedin_jobs)} LinkedIn jobs for user {user_id}")
+        except Exception as e:
+            logger.error(f"LinkedIn scraping failed for user {user_id}: {e}")
+
+    # Location filter
+    preferred_locations = prefs.get("preferred_locations") or []
+    if isinstance(preferred_locations, str):
+        preferred_locations = [l.strip() for l in preferred_locations.split(",")]
+    remote_only = bool(prefs.get("remote_only"))
+    hybrid_ok = bool(prefs.get("hybrid_ok", True))
+    all_jobs = _filter_jobs_by_location(all_jobs, preferred_locations, remote_only, hybrid_ok)
+
+    # Experience filter
+    user_experience = _get_user_experience(user_id, session)
+    if user_experience is not None:
+        all_jobs = _filter_jobs_by_experience(all_jobs, user_experience)
+
+    # Store jobs
+    new_count = _store_discovered_jobs(session, user_id, all_jobs)
+    logger.info(f"Stored {new_count} new jobs for user {user_id}")
+    return new_count
+
+
+def _run_matching_inline(user_id: str, session, loop):
+    """Run job matching inline using the agent session's event loop.
+
+    Avoids asyncio.run() which would destroy the session's event loop.
+    """
+    from sqlalchemy import text
+    import json
+
+    # Fetch user profile
+    user_result = session.execute(text("""
+        SELECT u.id, u.full_name, u.email,
+               up.headline, up.summary, up.current_title,
+               up.current_company, up.years_of_experience,
+               up.industry, up.location,
+               jp.desired_titles, jp.preferred_locations,
+               jp.job_types, jp.min_salary, jp.max_salary,
+               jp.experience_levels, jp.remote_only,
+               jp.min_match_score
+        FROM users u
+        LEFT JOIN user_profiles up ON u.id = up.user_id
+        LEFT JOIN job_preferences jp ON u.id = jp.user_id
+        WHERE u.id = :user_id
+    """), {"user_id": user_id})
+
+    user = user_result.mappings().first()
+    if not user:
+        return
+
+    user = dict(user)
+    match_threshold = user.get("min_match_score") or 70
+
+    # Map fields for JobMatcher
+    user["target_roles"] = user.get("desired_titles") or []
+    user["target_locations"] = user.get("preferred_locations") or []
+    user["experience_years"] = user.get("years_of_experience")
+    user["preferred_job_types"] = user.get("job_types") or []
+    user["bio"] = user.get("summary") or user.get("headline") or ""
+    user["remote_preference"] = "remote" if user.get("remote_only") else "any"
+
+    # Fetch skills
+    skills_result = session.execute(text("""
+        SELECT us.name FROM user_skills us
+        INNER JOIN user_profiles up ON us.profile_id = up.id
+        WHERE up.user_id = :user_id
+    """), {"user_id": user_id})
+    user["skills"] = ", ".join(r["name"] for r in skills_result.mappings() if r.get("name"))
+
+    # Fetch unscored jobs
+    jobs_result = session.execute(text("""
+        SELECT j.id, j.title, j.company, j.location, j.description,
+               j.salary_min, j.salary_max, j.job_type,
+               j.required_skills, j.preferred_skills,
+               j.is_easy_apply, j.platform, j.source_url,
+               jm.id as match_id
+        FROM jobs j
+        INNER JOIN job_matches jm ON j.id = jm.job_id
+        WHERE jm.user_id = :user_id
+          AND jm.status = 'new'
+          AND jm.overall_score = 0
+        ORDER BY j.created_at DESC
+        LIMIT 50
+    """), {"user_id": user_id})
+
+    jobs = [dict(row) for row in jobs_result.mappings()]
+    if not jobs:
+        return
+
+    logger.info(f"Matching {len(jobs)} jobs for user {user_id}")
+
+    # Score jobs using AI - use the session's event loop
+    from worker.tasks.job_matching import _score_jobs_batch
+    scores = loop.run_until_complete(_score_jobs_batch(user, jobs))
+
+    # Update scores and queue matched jobs
+    for job, score_data in zip(jobs, scores):
+        score = score_data.get("score", 0)
+        reasoning = score_data.get("reasoning", "")
+        new_status = "queued" if score >= match_threshold else "rejected"
+
+        strengths = score_data.get("strengths", [])
+        gaps = score_data.get("gaps", [])
+        matched_skills = score_data.get("matched_skills", [])
+        missing_skills = score_data.get("missing_skills", [])
+
+        session.execute(text("""
+            UPDATE job_matches
+            SET overall_score = :score,
+                match_reasoning = :reasoning,
+                skills_score = :skills_score,
+                experience_score = :experience_score,
+                education_score = :education_score,
+                location_score = :location_score,
+                salary_score = :salary_score,
+                strengths = :strengths,
+                gaps = :gaps,
+                matched_skills = :matched_skills,
+                missing_skills = :missing_skills,
+                scoring_model = :scoring_model,
+                scoring_version = :scoring_version,
+                status = :status,
+                scored_at = NOW(),
+                is_applied = FALSE
+            WHERE id = :match_id
+        """), {
+            "score": score,
+            "reasoning": reasoning,
+            "skills_score": score_data.get("skills_score", 0),
+            "experience_score": score_data.get("experience_score", 0),
+            "education_score": score_data.get("role_score", 0),
+            "location_score": score_data.get("location_score", 0),
+            "salary_score": score_data.get("salary_score", 0),
+            "strengths": json.dumps(strengths) if strengths else None,
+            "gaps": json.dumps(gaps) if gaps else None,
+            "matched_skills": json.dumps(matched_skills) if matched_skills else None,
+            "missing_skills": json.dumps(missing_skills) if missing_skills else None,
+            "scoring_model": os.environ.get("LLM_PROVIDER", "gemini").lower(),
+            "scoring_version": "2.0",
+            "status": new_status,
+            "match_id": str(job["match_id"]),
+        })
+
+    session.commit()
+    logger.info(f"Matching completed for {user_id}")
+
+
 @celery_app.task(
     name="worker.tasks.agent_tasks.run_agent_session",
     bind=True,
@@ -460,37 +667,24 @@ def run_agent_session(self, user_id: str):
         pending_jobs = _get_pending_jobs(user_id, remaining, session)
 
         # If no queued jobs, run discovery + matching inline.
-        # Cannot use .apply() (blocks event loop) or .apply_async().get()
-        # (Celery forbids result.get() inside a task). Instead, call the
-        # discovery and matching logic directly in this process.
+        # We call the underlying functions directly using our event loop
+        # to avoid asyncio.run() conflicts that destroy the loop.
         if not pending_jobs:
             logger.info(f"No pending jobs for user {user_id}, triggering discovery")
             _log_agent_activity(user_id, "discovering_jobs", "Searching for new jobs...")
 
             try:
-                from worker.tasks.job_discovery import discover_jobs_for_user
-                from worker.tasks.job_matching import match_jobs_for_user
-
-                # Run discovery synchronously via .apply(throw=True).
-                # Using throw=True so exceptions propagate instead of being swallowed.
-                # .apply() runs in-process but we accept the event loop tradeoff
-                # since discovery creates its own loop via asyncio.run().
-                discovery_result = discover_jobs_for_user.apply(args=[user_id], throw=True)
-                discovery_outcome = discovery_result.result or {}
-                new_jobs = discovery_outcome.get("new_jobs", 0)
+                new_jobs = _run_discovery_inline(user_id, session, loop)
                 logger.info(f"Discovery completed for {user_id}: {new_jobs} new jobs")
                 _log_agent_activity(
                     user_id, "discovery_complete",
                     f"Job discovery finished — found {new_jobs} new jobs",
                 )
 
-                # Run matching synchronously
-                match_jobs_for_user.apply(args=[user_id], throw=True)
+                # Run matching inline
+                _run_matching_inline(user_id, session, loop)
                 logger.info(f"Matching completed for {user_id}")
                 _log_agent_activity(user_id, "matching_complete", "Job matching finished")
-
-                # Re-set event loop after discovery/matching since asyncio.run() clears it
-                asyncio.set_event_loop(loop)
 
                 session.commit()
                 pending_jobs = _get_pending_jobs(user_id, remaining, session)
@@ -499,8 +693,6 @@ def run_agent_session(self, user_id: str):
             except Exception as e:
                 logger.error(f"Job discovery/matching failed for {user_id}: {e}", exc_info=True)
                 _log_agent_activity(user_id, "discovery_error", f"Job discovery error: {str(e)}")
-                # Re-set event loop so apply phase still works
-                asyncio.set_event_loop(loop)
                 try:
                     session.rollback()
                     pending_jobs = _get_pending_jobs(user_id, remaining, session)
@@ -683,7 +875,13 @@ async def _apply_linkedin_job(user_id: str, job: Dict, session) -> Dict[str, Any
     applicator = LinkedInApplicator(user_id=user_id)
     try:
         await applicator.initialize()
-        await applicator.login(credentials["email"], credentials["password"])
+
+        if credentials.get("cookies"):
+            await applicator.context.add_cookies(credentials["cookies"])
+            applicator._is_logged_in = True
+            logger.info(f"LinkedIn auth via cookies for {user_id}")
+        else:
+            await applicator.login(credentials["email"], credentials["password"])
 
         result = await applicator.apply_to_job(
             job_url=job["url"],
@@ -727,7 +925,13 @@ async def _apply_naukri_job(user_id: str, job: Dict, session) -> Dict[str, Any]:
     applicator = NaukriApplicator(user_id=user_id)
     try:
         await applicator.initialize()
-        await applicator.login(credentials["email"], credentials["password"])
+
+        if credentials.get("cookies"):
+            await applicator.context.add_cookies(credentials["cookies"])
+            applicator._is_logged_in = True
+            logger.info(f"Naukri auth via cookies for {user_id}")
+        else:
+            await applicator.login(credentials["email"], credentials["password"])
 
         result = await applicator.apply_to_job(
             job_url=job["url"],
@@ -759,11 +963,13 @@ def _create_application_record(user_id: str, job: Dict, result: Dict, session, s
             INSERT INTO applications (
                 id, user_id, job_id, platform, applied_via,
                 status, cover_letter, agent_screenshots,
+                match_score,
                 response_received, follow_up_count, retry_count,
                 applied_at, created_at
             ) VALUES (
                 :id, :user_id, :job_id, :platform, 'agent',
                 :status, :cover_letter, :screenshots,
+                :match_score,
                 false, 0, 0,
                 NOW(), NOW()
             )
@@ -775,6 +981,7 @@ def _create_application_record(user_id: str, job: Dict, result: Dict, session, s
             "status": status,
             "cover_letter": result.get("cover_letter", ""),
             "screenshots": json.dumps(screenshots) if screenshots else None,
+            "match_score": job.get("match_score"),
         })
         session.commit()
     except Exception as e:
@@ -810,9 +1017,15 @@ def validate_credentials_task(self, user_id: str, platform: str):
             return {"success": False, "error": "Credentials not found"}
 
         # Attempt login with the appropriate scraper
-        login_success = asyncio.run(
-            _test_login(platform, credentials["email"], credentials["password"])
-        )
+        if credentials.get("cookies"):
+            # Cookie-based auth: verify by navigating to feed with cookies
+            login_success = asyncio.run(
+                _test_cookie_login(platform, credentials["cookies"])
+            )
+        else:
+            login_success = asyncio.run(
+                _test_login(platform, credentials["email"], credentials["password"])
+            )
 
         if login_success:
             _update_credential_status(
@@ -822,7 +1035,7 @@ def validate_credentials_task(self, user_id: str, platform: str):
         else:
             _update_credential_status(
                 user_id, platform, is_verified=False,
-                error="Login failed - check username/password", session=session,
+                error="Login failed - check credentials or cookie", session=session,
             )
             return {"success": False, "error": "Login failed"}
 
@@ -853,6 +1066,30 @@ async def _test_login(platform: str, email: str, password: str) -> bool:
         await applicator.initialize()
         result = await applicator.login(email, password)
         return bool(result)
+    finally:
+        await applicator.cleanup()
+
+
+async def _test_cookie_login(platform: str, cookies: list) -> bool:
+    """Test cookie-based login by navigating to the platform and checking session."""
+    if platform == "linkedin":
+        from worker.scrapers.linkedin_applicator import LinkedInApplicator
+        applicator = LinkedInApplicator(user_id="validation")
+    else:
+        raise ValueError(f"Cookie validation not supported for {platform}")
+
+    try:
+        await applicator.initialize()
+        await applicator.context.add_cookies(cookies)
+        await applicator.page.goto(
+            "https://www.linkedin.com/feed",
+            wait_until="domcontentloaded",
+        )
+        await asyncio.sleep(3)
+        current_url = applicator.page.url
+        is_logged_in = "/login" not in current_url and "/authwall" not in current_url
+        logger.info(f"Cookie validation result for {platform}: logged_in={is_logged_in}, url={current_url}")
+        return is_logged_in
     finally:
         await applicator.cleanup()
 

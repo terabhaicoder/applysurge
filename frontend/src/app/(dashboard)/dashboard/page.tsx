@@ -24,7 +24,7 @@ import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 export default function DashboardPage() {
-  const { status: agentData, start, stop, unqueue, isLoading: agentLoading } = useAgent();
+  const { status: agentData, start, stop, unqueue, isLoading: agentLoading, isStarting, isStopping } = useAgent();
   const isAgentRunning = agentData?.is_running === true;
   const betaLimitReached = (agentData?.applications_total ?? 0) >= (agentData?.applications_limit_total ?? 10);
 
@@ -153,15 +153,15 @@ export default function DashboardPage() {
               </div>
             </div>
             {isAgentRunning ? (
-              <button onClick={stop} disabled={agentLoading} className="px-5 py-2.5 text-sm font-medium bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl flex items-center gap-2 transition-colors shrink-0 disabled:opacity-50">
-                <Square className="w-4 h-4" /> Stop Agent
+              <button onClick={stop} disabled={agentLoading || isStopping} className="px-5 py-2.5 text-sm font-medium bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl flex items-center gap-2 transition-colors shrink-0 disabled:opacity-50">
+                <Square className="w-4 h-4" /> {isStopping ? 'Stopping...' : 'Stop Agent'}
               </button>
             ) : (
-              <button onClick={start} disabled={agentLoading || betaLimitReached} className={cn(
+              <button onClick={start} disabled={agentLoading || isStarting || betaLimitReached} className={cn(
                 "px-6 py-2.5 text-sm font-medium rounded-xl flex items-center gap-2 transition-all shrink-0 disabled:opacity-50",
                 betaLimitReached ? "bg-secondary text-muted-foreground cursor-not-allowed" : "bg-primary hover:bg-primary/90 text-primary-foreground shadow-md shadow-primary/20"
               )}>
-                <Play className="w-4 h-4" /> {betaLimitReached ? "Limit Reached" : "Start Agent"}
+                <Play className="w-4 h-4" /> {betaLimitReached ? "Limit Reached" : isStarting ? "Starting..." : "Start Agent"}
               </button>
             )}
           </div>

@@ -49,16 +49,24 @@ class BrowserManager:
     _playwright: Optional[Playwright] = None
     _browser: Optional[Browser] = None
     _contexts: Dict[str, BrowserContext] = {}
-    _lock = asyncio.Lock()
-    _semaphore = asyncio.Semaphore(MAX_CONCURRENT_CONTEXTS)
+    _lock: Optional[asyncio.Lock] = None
+    _semaphore: Optional[asyncio.Semaphore] = None
 
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
+    def _ensure_locks(self):
+        """Lazily create asyncio primitives bound to the current event loop."""
+        if self._lock is None:
+            self._lock = asyncio.Lock()
+        if self._semaphore is None:
+            self._semaphore = asyncio.Semaphore(MAX_CONCURRENT_CONTEXTS)
+
     async def _ensure_browser(self):
         """Ensure the browser instance is running."""
+        self._ensure_locks()
         if self._browser is None or not self._browser.is_connected():
             async with self._lock:
                 if self._browser is None or not self._browser.is_connected():
@@ -112,6 +120,7 @@ class BrowserManager:
         Returns:
             Configured BrowserContext with stealth mode
         """
+        self._ensure_locks()
         context_key = f"{user_id}_{platform}"
 
         # Check for existing context

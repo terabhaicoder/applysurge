@@ -71,6 +71,11 @@ export function useAgent() {
     onSuccess: (data) => {
       setStatus(data);
       queryClient.invalidateQueries({ queryKey: ["agent-status"] });
+      addToast({ title: "Agent stopped", variant: "success" });
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.detail || "Failed to stop the agent";
+      addToast({ title: message, variant: "error" });
     },
   });
 
@@ -82,6 +87,11 @@ export function useAgent() {
     onSuccess: (data) => {
       setStatus(data);
       queryClient.invalidateQueries({ queryKey: ["agent-status"] });
+      addToast({ title: "Agent paused", variant: "success" });
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.detail || "Failed to pause the agent";
+      addToast({ title: message, variant: "error" });
     },
   });
 
@@ -93,6 +103,11 @@ export function useAgent() {
     onSuccess: (data) => {
       setStatus(data);
       queryClient.invalidateQueries({ queryKey: ["agent-status"] });
+      addToast({ title: "Agent resumed", variant: "success" });
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.detail || "Failed to resume the agent";
+      addToast({ title: message, variant: "error" });
     },
   });
 

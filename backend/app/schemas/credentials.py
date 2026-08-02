@@ -15,6 +15,11 @@ class CredentialCreate(BaseModel):
     password: str = Field(..., min_length=1, max_length=255)
 
 
+class CredentialCreateCookie(BaseModel):
+    """Schema for cookie-based authentication (e.g. LinkedIn li_at cookie)."""
+    cookie: str = Field(..., min_length=10, max_length=1024, strip_whitespace=True)
+
+
 class CredentialResponse(BaseModel):
     """Schema for credential response (no password exposed)."""
     model_config = ConfigDict(from_attributes=True)
@@ -24,6 +29,8 @@ class CredentialResponse(BaseModel):
     platform: str
     username: str
     is_valid: bool = False
+    has_cookie: bool = False
+    auth_method: str = "password"
     last_validated_at: Optional[datetime] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
@@ -34,6 +41,9 @@ class CredentialDetailResponse(BaseModel):
     platform: str
     email: str
     password: str
+    has_cookie: bool = False
+    masked_cookie: str = ""
+    auth_method: str = "password"
 
 
 class CredentialValidateResponse(BaseModel):

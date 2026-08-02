@@ -245,6 +245,7 @@ class ApplicationService:
             job_location=job.location if job else None,
             application_method=app.applied_via,
             status=app.status,
+            match_score=app.match_score,
             applied_at=app.applied_at,
             resume_id=app.resume_id,
             cover_letter=app.cover_letter,
