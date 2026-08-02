@@ -31,9 +31,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Playwright browsers
-RUN playwright install chromium
-RUN playwright install-deps chromium || true
+# Install patchright (Playwright fork with anti-detection patches)
+# and its Chromium browser
+RUN pip install --no-cache-dir patchright && patchright install chromium
+# Also install deps for the browser
+RUN playwright install-deps chromium || patchright install-deps chromium || true
 
 COPY . .
 

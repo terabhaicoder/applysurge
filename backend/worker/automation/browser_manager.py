@@ -11,7 +11,12 @@ import os
 import random
 from typing import Dict, Optional
 
-from playwright.async_api import async_playwright, Browser, BrowserContext, Playwright
+# Use patchright (Playwright fork) for better anti-detection
+# It patches the CDP Runtime.enable leak that LinkedIn detects
+try:
+    from patchright.async_api import async_playwright, Browser, BrowserContext, Playwright
+except ImportError:
+    from playwright.async_api import async_playwright, Browser, BrowserContext, Playwright
 
 logger = logging.getLogger(__name__)
 
