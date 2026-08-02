@@ -71,17 +71,20 @@ class BrowserManager:
             async with self._lock:
                 if self._browser is None or not self._browser.is_connected():
                     self._playwright = await async_playwright().start()
-                    headless = os.environ.get("PLAYWRIGHT_HEADLESS", "true").lower() == "true"
+                    headless_env = os.environ.get("PLAYWRIGHT_HEADLESS", "true").lower()
+                    # Use "new" headless mode which is much harder for sites to detect
+                    headless = "new" if headless_env == "true" else False
                     launch_args = [
                         "--no-sandbox",
                         "--disable-setuid-sandbox",
                         "--disable-dev-shm-usage",
-                        "--disable-accelerated-2d-canvas",
-                        "--disable-gpu",
                         "--disable-blink-features=AutomationControlled",
                         "--disable-infobars",
                         "--window-size=1920,1080",
                         "--start-maximized",
+                        "--disable-features=IsolateOrigins,site-per-process",
+                        "--flag-switches-begin",
+                        "--flag-switches-end",
                     ]
 
                     # Try launching with real Chrome channel first for better anti-detection
@@ -91,14 +94,14 @@ class BrowserManager:
                             channel="chrome",
                             args=launch_args,
                         )
-                        logger.info("Browser launched with Chrome channel")
+                        logger.info("Browser launched with Chrome channel (new headless)")
                     except Exception:
                         # Fall back to bundled Chromium
                         self._browser = await self._playwright.chromium.launch(
                             headless=headless,
                             args=launch_args,
                         )
-                        logger.info("Browser launched with bundled Chromium")
+                        logger.info("Browser launched with bundled Chromium (new headless)")
 
     async def get_context(
         self,
@@ -278,6 +281,33 @@ class BrowserManager:
                 if (parameter === 37446) return 'Intel Iris OpenGL Engine';
                 return getParameter.apply(this, arguments);
             };
+            """,
+            # Remove Playwright/Automation indicators from window
+            """
+            delete window.__playwright;
+            delete window.__pw_manual;
+            delete window._phantom;
+            delete window.callPhantom;
+            delete window.__nightmare;
+            """,
+            # Override Connection RTT to look realistic
+            """
+            if (navigator.connection) {
+                Object.defineProperty(navigator.connection, 'rtt', { get: () => 50 });
+            }
+            """,
+            # Prevent iframe contentWindow detection
+            """
+            const origContentWindow = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, 'contentWindow');
+            Object.defineProperty(HTMLIFrameElement.prototype, 'contentWindow', {
+                get: function() {
+                    const w = origContentWindow.get.call(this);
+                    if (w && this.src === 'about:blank') {
+                        try { w.chrome = window.chrome; } catch(e) {}
+                    }
+                    return w;
+                }
+            });
             """,
         ]
 
