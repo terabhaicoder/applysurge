@@ -80,20 +80,12 @@ class BrowserManager:
                         "--disable-infobars",
                         "--window-size=1920,1080",
                         "--start-maximized",
-                        "--disable-features=IsolateOrigins,site-per-process",
                     ]
-                    # Use Chromium's new headless mode via CLI arg (harder to detect)
-                    if headless:
-                        launch_args.append("--headless=new")
-
-                    # When using --headless=new via args, tell Playwright headless=False
-                    # so it doesn't add its own --headless flag that conflicts
-                    pw_headless = False if "--headless=new" in launch_args else headless
 
                     # Try launching with real Chrome channel first for better anti-detection
                     try:
                         self._browser = await self._playwright.chromium.launch(
-                            headless=pw_headless,
+                            headless=headless,
                             channel="chrome",
                             args=launch_args,
                         )
@@ -101,7 +93,7 @@ class BrowserManager:
                     except Exception:
                         # Fall back to bundled Chromium
                         self._browser = await self._playwright.chromium.launch(
-                            headless=pw_headless,
+                            headless=headless,
                             args=launch_args,
                         )
                         logger.info("Browser launched with bundled Chromium")
