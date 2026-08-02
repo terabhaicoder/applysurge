@@ -71,9 +71,7 @@ class BrowserManager:
             async with self._lock:
                 if self._browser is None or not self._browser.is_connected():
                     self._playwright = await async_playwright().start()
-                    headless_env = os.environ.get("PLAYWRIGHT_HEADLESS", "true").lower()
-                    # Use "new" headless mode which is much harder for sites to detect
-                    headless = "new" if headless_env == "true" else False
+                    headless = os.environ.get("PLAYWRIGHT_HEADLESS", "true").lower() == "true"
                     launch_args = [
                         "--no-sandbox",
                         "--disable-setuid-sandbox",
@@ -83,25 +81,30 @@ class BrowserManager:
                         "--window-size=1920,1080",
                         "--start-maximized",
                         "--disable-features=IsolateOrigins,site-per-process",
-                        "--flag-switches-begin",
-                        "--flag-switches-end",
                     ]
+                    # Use Chromium's new headless mode via CLI arg (harder to detect)
+                    if headless:
+                        launch_args.append("--headless=new")
+
+                    # When using --headless=new via args, tell Playwright headless=False
+                    # so it doesn't add its own --headless flag that conflicts
+                    pw_headless = False if "--headless=new" in launch_args else headless
 
                     # Try launching with real Chrome channel first for better anti-detection
                     try:
                         self._browser = await self._playwright.chromium.launch(
-                            headless=headless,
+                            headless=pw_headless,
                             channel="chrome",
                             args=launch_args,
                         )
-                        logger.info("Browser launched with Chrome channel (new headless)")
+                        logger.info("Browser launched with Chrome channel")
                     except Exception:
                         # Fall back to bundled Chromium
                         self._browser = await self._playwright.chromium.launch(
-                            headless=headless,
+                            headless=pw_headless,
                             args=launch_args,
                         )
-                        logger.info("Browser launched with bundled Chromium (new headless)")
+                        logger.info("Browser launched with bundled Chromium")
 
     async def get_context(
         self,
