@@ -60,12 +60,16 @@ def _get_active_users(session) -> List[Dict[str, Any]]:
 
 
 def _get_user_credentials(user_id: str, platform: str, session) -> Dict[str, str]:
-    """Fetch decrypted credentials from platform_credentials table."""
+    """Fetch decrypted credentials from platform_credentials table.
+
+    Returns dict with either 'cookies' key (preferred) or 'email'+'password' keys.
+    """
     from sqlalchemy import text
     from app.core.encryption import decrypt_value
+    import json
 
     result = session.execute(text("""
-        SELECT platform_email, platform_username, encrypted_password
+        SELECT platform_email, platform_username, encrypted_password, encrypted_cookies
         FROM platform_credentials
         WHERE user_id = :user_id AND platform = :platform AND is_active = true
     """), {"user_id": user_id, "platform": platform})
@@ -74,6 +78,18 @@ def _get_user_credentials(user_id: str, platform: str, session) -> Dict[str, str
     if not row:
         return {}
 
+    # Prefer cookies over password
+    encrypted_cookies = row["encrypted_cookies"]
+    if encrypted_cookies:
+        cookies_str = decrypt_value(encrypted_cookies)
+        if cookies_str:
+            try:
+                cookies = json.loads(cookies_str)
+                return {"cookies": cookies}
+            except json.JSONDecodeError:
+                pass
+
+    # Fall back to password
     encrypted_password = row["encrypted_password"]
     if not encrypted_password:
         return {}
@@ -519,7 +535,34 @@ async def _scrape_linkedin(
     scraper = LinkedInScraper(user_id=user_id)
     try:
         await scraper.initialize()
-        await scraper.login(credentials["email"], credentials["password"])
+
+        if credentials.get("cookies"):
+            await scraper.context.add_cookies(credentials["cookies"])
+            logger.info(f"LinkedIn auth via cookies for {user_id}, verifying session...")
+
+            # Verify the cookie session is actually valid by navigating to feed
+            try:
+                await scraper.page.goto(
+                    "https://www.linkedin.com/feed",
+                    wait_until="domcontentloaded",
+                )
+                await asyncio.sleep(3)  # Give LinkedIn time to redirect if not logged in
+                current_url = scraper.page.url
+                if "/login" in current_url or "/authwall" in current_url:
+                    logger.error(
+                        f"LinkedIn cookie session invalid for {user_id} "
+                        f"(redirected to {current_url}). Cookies may be expired."
+                    )
+                    await scraper.take_screenshot("linkedin_cookie_session_invalid")
+                    return []
+                scraper._is_logged_in = True
+                logger.info(f"LinkedIn cookie session verified for {user_id} (URL: {current_url})")
+            except Exception as e:
+                logger.error(f"LinkedIn session verification failed for {user_id}: {e}")
+                await scraper.take_screenshot("linkedin_cookie_verify_error")
+                return []
+        else:
+            await scraper.login(credentials["email"], credentials["password"])
 
         all_jobs = []
         seen_ids = set()

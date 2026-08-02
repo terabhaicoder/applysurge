@@ -204,17 +204,49 @@ class LinkedInScraper(BaseScraper):
             # Wait for navigation
             await self.wait_for_navigation()
 
-            # Check for CAPTCHA or security challenge
-            if await self.check_for_captcha():
-                logger.warning("CAPTCHA detected during LinkedIn login")
-                screenshot = await self.take_screenshot("linkedin_captcha")
-                return False
+            # Check for CAPTCHA or security challenge — wait for manual resolution
+            if await self.check_for_captcha() or await self._check_security_challenge():
+                challenge_type = "CAPTCHA" if await self.check_for_captcha() else "security challenge"
+                logger.warning(f"{challenge_type} detected during LinkedIn login, waiting for manual resolution")
+                await self.take_screenshot(f"linkedin_{challenge_type.replace(' ', '_')}")
 
-            # Check for security verification
-            if await self._check_security_challenge():
-                logger.warning("Security challenge detected during LinkedIn login")
-                screenshot = await self.take_screenshot("linkedin_security_challenge")
-                return False
+                # Notify user via captcha handler
+                try:
+                    from worker.automation.captcha_handler import CaptchaHandler
+                    handler = CaptchaHandler()
+                    await handler.notify_user(
+                        user_id=self.user_id,
+                        platform="linkedin",
+                        captcha_type=challenge_type,
+                    )
+                except Exception as e:
+                    logger.debug(f"Failed to send CAPTCHA notification: {e}")
+
+                # Wait up to 3 minutes, checking every 15 seconds
+                resolved = False
+                for attempt in range(12):
+                    logger.info(f"Waiting for {challenge_type} resolution... ({attempt + 1}/12)")
+                    await asyncio.sleep(15)
+
+                    # Check if CAPTCHA/challenge is gone
+                    still_captcha = await self.check_for_captcha()
+                    still_challenge = await self._check_security_challenge()
+
+                    if not still_captcha and not still_challenge:
+                        logger.info(f"{challenge_type} resolved!")
+                        resolved = True
+                        break
+
+                    # Check if page navigated away (user solved it)
+                    if "/feed" in self.page.url or "/mynetwork" in self.page.url:
+                        logger.info("User resolved challenge — now on feed page")
+                        resolved = True
+                        break
+
+                if not resolved:
+                    logger.error(f"{challenge_type} not resolved after 3 minutes")
+                    await self.take_screenshot(f"linkedin_{challenge_type.replace(' ', '_')}_timeout")
+                    return False
 
             # Verify login success
             if "/feed" in self.page.url or "/mynetwork" in self.page.url:
@@ -346,6 +378,15 @@ class LinkedInScraper(BaseScraper):
             await self.page.goto(page_url, wait_until="domcontentloaded")
             await self.random_delay(3.0, 5.0)
 
+            # Check if we got redirected to login (expired session)
+            current_url = self.page.url
+            if "/login" in current_url or "/authwall" in current_url:
+                logger.error(
+                    f"LinkedIn session expired — redirected to login page: {current_url}"
+                )
+                await self.take_screenshot("linkedin_search_redirected_to_login")
+                return all_jobs  # Return whatever we have so far
+
             # Check for captcha
             if await self.check_for_captcha():
                 logger.warning("CAPTCHA detected during job search")
@@ -365,7 +406,7 @@ class LinkedInScraper(BaseScraper):
             ]
             for sel in results_selectors:
                 try:
-                    await self.page.wait_for_selector(sel, timeout=5000)
+                    await self.page.wait_for_selector(sel, timeout=8000)
                     results_found = True
                     logger.info(f"Found results with selector: {sel}")
                     break
@@ -373,7 +414,10 @@ class LinkedInScraper(BaseScraper):
                     continue
 
             if not results_found:
-                logger.warning(f"No job results found on page {page_num + 1}")
+                logger.warning(
+                    f"No job results found on page {page_num + 1}, "
+                    f"current URL: {self.page.url}"
+                )
                 await self.take_screenshot(f"linkedin_no_results_page_{page_num + 1}")
                 break
 

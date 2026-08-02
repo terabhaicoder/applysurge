@@ -351,13 +351,17 @@ def apply_to_job(self, user_id: str, job_id: str, match_id: str):
 
 
 def _get_platform_credentials(user_id: str, platform: str) -> Dict[str, Any]:
-    """Fetch and decrypt platform credentials for a user."""
+    """Fetch and decrypt platform credentials for a user.
+
+    Returns dict with either 'cookies' key (preferred) or 'email'+'password' keys.
+    """
     from app.core.encryption import decrypt_value
+    import json
 
     session = _get_db_session()
     try:
         result = session.execute(text("""
-            SELECT platform_username, platform_email, encrypted_password
+            SELECT platform_username, platform_email, encrypted_password, encrypted_cookies
             FROM platform_credentials
             WHERE user_id = :user_id
               AND platform = :platform
@@ -369,7 +373,19 @@ def _get_platform_credentials(user_id: str, platform: str) -> Dict[str, Any]:
             return None
 
         row = dict(row)
-        # Decrypt password
+
+        # Prefer cookies over password
+        encrypted_cookies = row.get("encrypted_cookies")
+        if encrypted_cookies:
+            cookies_str = decrypt_value(encrypted_cookies)
+            if cookies_str:
+                try:
+                    cookies = json.loads(cookies_str)
+                    return {"cookies": cookies}
+                except json.JSONDecodeError:
+                    pass
+
+        # Fall back to password
         encrypted_password = row.get("encrypted_password")
         decrypted_password = decrypt_value(encrypted_password) if encrypted_password else None
 
@@ -387,7 +403,7 @@ async def _apply_linkedin(user: Dict[str, Any], job: Dict[str, Any]) -> Dict[str
 
     # Get credentials from platform_credentials table
     credentials = _get_platform_credentials(str(user["id"]), "linkedin")
-    if not credentials or not credentials.get("password"):
+    if not credentials or (not credentials.get("password") and not credentials.get("cookies")):
         return {
             "success": False,
             "error": "LinkedIn credentials not found or invalid",
@@ -397,7 +413,13 @@ async def _apply_linkedin(user: Dict[str, Any], job: Dict[str, Any]) -> Dict[str
     applicator = LinkedInApplicator(user_id=str(user["id"]))
     try:
         await applicator.initialize()
-        await applicator.login(credentials["email"], credentials["password"])
+
+        if credentials.get("cookies"):
+            await applicator.context.add_cookies(credentials["cookies"])
+            applicator._is_logged_in = True
+        else:
+            await applicator.login(credentials["email"], credentials["password"])
+
         result = await applicator.apply_to_job(
             job_url=job.get("source_url") or job.get("url", ""),
             user_profile=user,
