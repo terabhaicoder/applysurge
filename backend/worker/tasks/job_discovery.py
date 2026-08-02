@@ -542,12 +542,17 @@ async def _scrape_linkedin(
 
             # Verify the cookie session is actually valid by navigating to feed
             try:
-                await scraper.page.goto(
+                # Use goto without throwing on HTTP errors - LinkedIn may return
+                # non-2xx status codes from data center IPs but still render the page
+                response = await scraper.page.goto(
                     "https://www.linkedin.com/feed",
                     wait_until="domcontentloaded",
                 )
-                await asyncio.sleep(3)  # Give LinkedIn time to redirect if not logged in
+                http_status = response.status if response else 0
+                await asyncio.sleep(3)
                 current_url = scraper.page.url
+                logger.info(f"LinkedIn feed response: HTTP {http_status}, URL: {current_url}")
+
                 if "/login" in current_url or "/authwall" in current_url:
                     logger.error(
                         f"LinkedIn cookie session invalid for {user_id} "
@@ -555,12 +560,31 @@ async def _scrape_linkedin(
                     )
                     await scraper.take_screenshot("linkedin_cookie_session_invalid")
                     return []
+
+                # Even if HTTP status was non-200, if we're on /feed, the session is valid
                 scraper._is_logged_in = True
-                logger.info(f"LinkedIn cookie session verified for {user_id} (URL: {current_url})")
+                logger.info(f"LinkedIn cookie session verified for {user_id}")
             except Exception as e:
-                logger.error(f"LinkedIn session verification failed for {user_id}: {e}")
-                await scraper.take_screenshot("linkedin_cookie_verify_error")
-                return []
+                error_msg = str(e)
+                logger.warning(f"LinkedIn feed navigation issue for {user_id}: {error_msg}")
+                # If it's an HTTP error, the page may still have loaded - check URL
+                try:
+                    current_url = scraper.page.url
+                    if "/feed" in current_url or "/mynetwork" in current_url:
+                        scraper._is_logged_in = True
+                        logger.info(f"LinkedIn session valid despite navigation error (URL: {current_url})")
+                    elif "/login" in current_url or "/authwall" in current_url:
+                        logger.error(f"Cookie expired - redirected to login")
+                        await scraper.take_screenshot("linkedin_cookie_expired")
+                        return []
+                    else:
+                        # Try skipping verification and go straight to search
+                        logger.info(f"Skipping feed verification, proceeding to search directly")
+                        scraper._is_logged_in = True
+                except Exception:
+                    logger.error(f"LinkedIn session verification failed completely for {user_id}")
+                    await scraper.take_screenshot("linkedin_cookie_verify_error")
+                    return []
         else:
             await scraper.login(credentials["email"], credentials["password"])
 

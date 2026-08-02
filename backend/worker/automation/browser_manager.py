@@ -19,15 +19,15 @@ logger = logging.getLogger(__name__)
 MAX_CONCURRENT_CONTEXTS = int(os.environ.get("MAX_BROWSER_CONTEXTS", 5))
 
 # Updated user agents (Chrome 124-127 as of mid-2025)
-USER_AGENTS = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0",
+# User agents with matching platform info (UA, platform)
+USER_AGENT_PROFILES = [
+    {"ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36", "platform": "Win32"},
+    {"ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36", "platform": "Win32"},
+    {"ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36", "platform": "MacIntel"},
+    {"ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36", "platform": "MacIntel"},
+    {"ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36", "platform": "Linux x86_64"},
 ]
+USER_AGENTS = [p["ua"] for p in USER_AGENT_PROFILES]
 
 # Viewport sizes for rotation
 VIEWPORT_SIZES = [
@@ -138,8 +138,10 @@ class BrowserManager:
         try:
             await self._ensure_browser()
 
-            # Randomize browser fingerprint
-            user_agent = random.choice(USER_AGENTS)
+            # Randomize browser fingerprint with consistent profile
+            profile = random.choice(USER_AGENT_PROFILES)
+            user_agent = profile["ua"]
+            self._current_platform = profile["platform"]
             viewport = random.choice(VIEWPORT_SIZES)
 
             context = await self._browser.new_context(
@@ -162,8 +164,8 @@ class BrowserManager:
                 },
             )
 
-            # Apply stealth mode scripts
-            await self._apply_stealth_scripts(context)
+            # Apply stealth mode scripts with matching platform
+            await self._apply_stealth_scripts(context, self._current_platform)
 
             self._contexts[context_key] = context
             logger.info(f"Created browser context for {context_key}")
@@ -188,7 +190,7 @@ class BrowserManager:
                 self._semaphore.release()
                 logger.info(f"Released browser context for {context_key}")
 
-    async def _apply_stealth_scripts(self, context: BrowserContext):
+    async def _apply_stealth_scripts(self, context: BrowserContext, platform: str = "Win32"):
         """Apply stealth mode scripts to avoid bot detection."""
         stealth_scripts = [
             # Override navigator.webdriver
@@ -215,10 +217,18 @@ class BrowserManager:
                     originalQuery(parameters)
             );
             """,
-            # Override plugins
+            # Override plugins with realistic PluginArray-like structure
             """
             Object.defineProperty(navigator, 'plugins', {
-                get: () => [1, 2, 3, 4, 5],
+                get: () => {
+                    const plugins = [
+                        {name: 'Chrome PDF Plugin', filename: 'internal-pdf-viewer', description: 'Portable Document Format'},
+                        {name: 'Chrome PDF Viewer', filename: 'mhjfbmdgcfjbbpaeojofohoefgiehjai', description: ''},
+                        {name: 'Native Client', filename: 'internal-nacl-plugin', description: ''},
+                    ];
+                    plugins.length = 3;
+                    return plugins;
+                },
             });
             """,
             # Override languages
@@ -227,11 +237,11 @@ class BrowserManager:
                 get: () => ['en-US', 'en'],
             });
             """,
-            # Override platform
-            """
-            Object.defineProperty(navigator, 'platform', {
-                get: () => 'Win32',
-            });
+            # Override platform (must match user agent)
+            f"""
+            Object.defineProperty(navigator, 'platform', {{
+                get: () => '{platform}',
+            }});
             """,
             # Override hardware concurrency
             """

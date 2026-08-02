@@ -375,7 +375,11 @@ class LinkedInScraper(BaseScraper):
         for page_num in range(max_pages):
             # Navigate to search results page
             page_url = f"{search_url}&start={page_num * 25}"
-            await self.page.goto(page_url, wait_until="domcontentloaded")
+            try:
+                await self.page.goto(page_url, wait_until="domcontentloaded")
+            except Exception as nav_err:
+                logger.warning(f"Search page navigation error (may still work): {nav_err}")
+                # Page may have partially loaded despite HTTP error
             await self.random_delay(3.0, 5.0)
 
             # Check if we got redirected to login (expired session)
@@ -501,9 +505,9 @@ class LinkedInScraper(BaseScraper):
         if date_filter:
             params["f_TPR"] = date_filter
 
-        # Easy Apply filter
+        # Easy Apply filter (f_LF=f_AL means "LinkedIn Features = Apply on LinkedIn")
         if easy_apply:
-            params["f_AL"] = "true"
+            params["f_LF"] = "f_AL"
 
         # Remote filter
         if remote:
