@@ -520,7 +520,7 @@ export default function LandingPage() {
           {/* Bottom bar */}
           <div className="border-t border-border/50 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-xs text-muted-foreground">
-              &copy; {new Date().getFullYear()} Augustinnovate Pvt. Ltd. All rights reserved.
+              &copy; {new Date().getFullYear()} Built by <a href="https://paarthpanthri.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2">Paarth Panthri</a>
             </p>
             <div className="flex items-center gap-6">
               {/* Twitter / X */}

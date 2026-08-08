@@ -215,7 +215,7 @@ export default function PricingPage() {
       <footer className="border-t border-border py-10 px-6">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} Augustinnovate Pvt. Ltd. All rights reserved.
+            &copy; {new Date().getFullYear()} Built by <a href="https://paarthpanthri.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2">Paarth Panthri</a>
           </p>
           <div className="flex gap-6">
             <a href="/#features" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Features</a>

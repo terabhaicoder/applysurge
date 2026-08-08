@@ -27,6 +27,8 @@ export default function DashboardPage() {
   const { status: agentData, start, stop, unqueue, isLoading: agentLoading, isStarting, isStopping } = useAgent();
   const isAgentRunning = agentData?.is_running === true;
   const betaLimitReached = (agentData?.applications_total ?? 0) >= (agentData?.applications_limit_total ?? 10);
+  // We'll use setupReady below to block Start if setup is incomplete
+  // (computed after setup queries load)
 
   const { data: stats } = useQuery({
     queryKey: ['dashboard-stats'],
@@ -157,11 +159,25 @@ export default function DashboardPage() {
                 <Square className="w-4 h-4" /> {isStopping ? 'Stopping...' : 'Stop Agent'}
               </button>
             ) : (
-              <button onClick={start} disabled={agentLoading || isStarting || betaLimitReached} className={cn(
-                "px-6 py-2.5 text-sm font-medium rounded-xl flex items-center gap-2 transition-all shrink-0 disabled:opacity-50",
-                betaLimitReached ? "bg-secondary text-muted-foreground cursor-not-allowed" : "bg-primary hover:bg-primary/90 text-primary-foreground shadow-md shadow-primary/20"
-              )}>
-                <Play className="w-4 h-4" /> {betaLimitReached ? "Limit Reached" : isStarting ? "Starting..." : "Start Agent"}
+              <button
+                onClick={start}
+                disabled={agentLoading || isStarting || betaLimitReached || !hasLinkedIn}
+                className={cn(
+                  "px-6 py-2.5 text-sm font-medium rounded-xl flex items-center gap-2 transition-all shrink-0 disabled:opacity-50",
+                  betaLimitReached || !hasLinkedIn
+                    ? "bg-secondary text-muted-foreground cursor-not-allowed"
+                    : "bg-primary hover:bg-primary/90 text-primary-foreground shadow-md shadow-primary/20"
+                )}
+                title={!hasLinkedIn ? "Connect LinkedIn first in Settings" : undefined}
+              >
+                <Play className="w-4 h-4" />
+                {betaLimitReached
+                  ? "Limit Reached"
+                  : !hasLinkedIn
+                    ? "Connect LinkedIn First"
+                    : isStarting
+                      ? "Starting..."
+                      : "Start Agent"}
               </button>
             )}
           </div>

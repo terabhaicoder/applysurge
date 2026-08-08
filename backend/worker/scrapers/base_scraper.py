@@ -26,16 +26,20 @@ class BaseScraper(ABC):
     MAX_DELAY: float = 3.0
     PAGE_LOAD_TIMEOUT: int = 60000  # 60 seconds (headless Docker needs more time)
 
-    def __init__(self, user_id: str):
+    def __init__(self, user_id: str, context=None, page=None):
         self.user_id = user_id
         self.browser_manager = BrowserManager()
         self.session_manager = SessionManager()
-        self.context = None
-        self.page = None
-        self._is_logged_in = False
+        self.context = context
+        self.page = page
+        self._is_logged_in = context is not None and page is not None
+        self._owns_context = context is None  # Track if we created it
 
     async def initialize(self):
         """Initialize browser context with stealth configuration."""
+        if self.context and self.page:
+            return  # Using externally provided context
+
         self.context = await self.browser_manager.get_context(
             user_id=self.user_id,
             platform=self.PLATFORM,
@@ -54,6 +58,9 @@ class BaseScraper(ABC):
 
     async def cleanup(self):
         """Save session and close browser context."""
+        if not self._owns_context:
+            return  # Caller owns the context, they handle cleanup
+
         if self._is_logged_in and self.context:
             # Save cookies for next session
             cookies = await self.context.cookies()
@@ -122,11 +129,11 @@ class BaseScraper(ABC):
         """Wait for page navigation with custom timeout."""
         timeout = timeout or self.PAGE_LOAD_TIMEOUT
         try:
-            await self.page.wait_for_load_state("networkidle", timeout=timeout)
+            await self.page.wait_for_load_state("domcontentloaded", timeout=timeout)
         except Exception:
-            # Fall back to domcontentloaded
+            # Fall back to load state
             try:
-                await self.page.wait_for_load_state("domcontentloaded", timeout=5000)
+                await self.page.wait_for_load_state("load", timeout=5000)
             except Exception:
                 pass
 

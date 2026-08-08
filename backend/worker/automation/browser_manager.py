@@ -56,6 +56,7 @@ class BrowserManager:
     _contexts: Dict[str, BrowserContext] = {}
     _lock: Optional[asyncio.Lock] = None
     _semaphore: Optional[asyncio.Semaphore] = None
+    _bound_loop = None  # Track which event loop our primitives belong to
 
     def __new__(cls):
         if cls._instance is None:
@@ -64,6 +65,19 @@ class BrowserManager:
 
     def _ensure_locks(self):
         """Lazily create asyncio primitives bound to the current event loop."""
+        try:
+            current_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            current_loop = asyncio.get_event_loop()
+
+        # Re-create locks if they belong to a different event loop
+        if self._bound_loop is not current_loop:
+            self._lock = None
+            self._semaphore = None
+            # Stale contexts from previous loop are unusable
+            self._contexts.clear()
+            self._bound_loop = current_loop
+
         if self._lock is None:
             self._lock = asyncio.Lock()
         if self._semaphore is None:

@@ -39,9 +39,25 @@ class LinkedInApplicator(BaseScraper):
     MIN_DELAY = 1.5
     MAX_DELAY = 4.0
 
-    def __init__(self, user_id: str):
-        super().__init__(user_id)
+    def __init__(self, user_id: str, context=None, page=None):
+        super().__init__(user_id, context, page)
         self._modal = None  # Cache the modal element
+        self._form_filler = None
+        self._question_answerer = None
+
+    @property
+    def form_filler(self):
+        if self._form_filler is None:
+            from worker.automation.form_filler import FormFiller
+            self._form_filler = FormFiller()
+        return self._form_filler
+
+    @property
+    def question_answerer(self):
+        if self._question_answerer is None:
+            from worker.ai.question_answerer import QuestionAnswerer
+            self._question_answerer = QuestionAnswerer()
+        return self._question_answerer
 
     async def login(self, email: str, password: str) -> bool:
         """Login to LinkedIn (delegates to LinkedInScraper login logic)."""
@@ -104,10 +120,18 @@ class LinkedInApplicator(BaseScraper):
 
             # Check for CAPTCHA
             if await self.check_for_captcha():
+                from worker.automation.captcha_handler import CaptchaHandler
+                handler = CaptchaHandler()
+                captcha_result = await handler.handle_captcha(
+                    page=self.page,
+                    user_id=self.user_id,
+                    platform="linkedin",
+                )
                 return {
                     "success": False,
                     "error": "CAPTCHA detected",
-                    "screenshot_url": initial_ss,
+                    "captcha": True,
+                    "screenshot_url": captcha_result.get("screenshot_url", initial_ss),
                 }
 
             # Check if job is no longer accepting applications
@@ -422,8 +446,9 @@ class LinkedInApplicator(BaseScraper):
             step += 1
             await self.random_delay(1.0, 2.0)
 
-            # Check if application was submitted
-            if await self._check_submission_success():
+            # Check if application was submitted (skip on first step to avoid
+            # false positives from residual success indicators)
+            if step > 1 and await self._check_submission_success():
                 logger.info("Application submitted successfully!")
                 return {"success": True, "method": "easy_apply", "steps_completed": step}
 
@@ -643,8 +668,7 @@ class LinkedInApplicator(BaseScraper):
 
     async def _fill_text_fields(self, user_profile: Dict[str, Any]):
         """Fill visible text input fields using profile data."""
-        from worker.automation.form_filler import FormFiller
-        filler = FormFiller()
+        filler = self.form_filler
 
         # Query inputs inside the modal context
         modal = await self._get_modal()
@@ -699,8 +723,7 @@ class LinkedInApplicator(BaseScraper):
 
     async def _fill_select_fields(self, user_profile: Dict[str, Any]):
         """Fill select/dropdown fields."""
-        from worker.automation.form_filler import FormFiller
-        filler = FormFiller()
+        filler = self.form_filler
 
         modal = await self._get_modal()
         scope = modal if modal else self.page
@@ -748,8 +771,7 @@ class LinkedInApplicator(BaseScraper):
 
     async def _fill_radio_fields(self, user_profile: Dict[str, Any]):
         """Fill radio button groups (native input[type=radio] AND custom role=radio)."""
-        from worker.automation.form_filler import FormFiller
-        filler = FormFiller()
+        filler = self.form_filler
 
         modal = await self._get_modal()
         scope = modal if modal else self.page
@@ -848,8 +870,7 @@ class LinkedInApplicator(BaseScraper):
         if not question_containers:
             return
 
-        # Lazy-init the answerer only when needed
-        answerer = None
+        answerer = self.question_answerer
 
         for container in question_containers:
             try:
@@ -889,10 +910,6 @@ class LinkedInApplicator(BaseScraper):
                     if current_val.strip():
                         continue  # Already filled (by profile filler or pre-filled)
 
-                    if not answerer:
-                        from worker.ai.question_answerer import QuestionAnswerer
-                        answerer = QuestionAnswerer()
-
                     input_type = await text_input.get_attribute("type") or "text"
                     answer = await answerer.answer_question(
                         question=question_text,
@@ -929,10 +946,6 @@ class LinkedInApplicator(BaseScraper):
                             option_texts.append(text)
 
                     if option_texts:
-                        if not answerer:
-                            from worker.ai.question_answerer import QuestionAnswerer
-                            answerer = QuestionAnswerer()
-
                         answer = await answerer.answer_question(
                             question=question_text,
                             user_profile=user_profile,
@@ -987,10 +1000,6 @@ class LinkedInApplicator(BaseScraper):
                             radio_labels.append(label)
 
                     if radio_labels:
-                        if not answerer:
-                            from worker.ai.question_answerer import QuestionAnswerer
-                            answerer = QuestionAnswerer()
-
                         answer = await answerer.answer_question(
                             question=question_text,
                             user_profile=user_profile,
@@ -1025,8 +1034,7 @@ class LinkedInApplicator(BaseScraper):
         modal = await self._get_modal()
         scope = modal if modal else self.page
 
-        from worker.ai.question_answerer import QuestionAnswerer
-        answerer = QuestionAnswerer()
+        answerer = self.question_answerer
 
         # Find all visible empty text/number inputs
         all_inputs = await scope.query_selector_all(
@@ -1249,8 +1257,7 @@ class LinkedInApplicator(BaseScraper):
         if not typeahead_items:
             return
 
-        from worker.automation.form_filler import FormFiller
-        filler = FormFiller()
+        filler = self.form_filler
 
         for container, input_el in typeahead_items:
             try:
@@ -1276,9 +1283,7 @@ class LinkedInApplicator(BaseScraper):
 
                 # If no profile mapping, try AI
                 if not value:
-                    from worker.ai.question_answerer import QuestionAnswerer
-                    answerer = QuestionAnswerer()
-                    value = await answerer.answer_question(
+                    value = await self.question_answerer.answer_question(
                         question=label,
                         user_profile=user_profile,
                         job_details=job_details,
@@ -1544,9 +1549,11 @@ class LinkedInApplicator(BaseScraper):
     async def _click_primary_button(self) -> bool:
         """Fallback: click any primary action button in the modal footer."""
         try:
-            button = await self.page.query_selector(
+            modal = await self._get_modal()
+            scope = modal if modal else self.page
+            button = await scope.query_selector(
                 "footer button.artdeco-button--primary, "
-                ".artdeco-modal footer button.artdeco-button--primary"
+                "button.artdeco-button--primary"
             )
             if button and await button.is_visible():
                 btn_text = (await button.text_content() or "").strip()

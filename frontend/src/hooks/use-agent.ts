@@ -40,6 +40,8 @@ export function useAgent() {
     onSuccess: (data) => {
       setStatus(data);
       queryClient.invalidateQueries({ queryKey: ["agent-status"] });
+      queryClient.invalidateQueries({ queryKey: ["agent-logs"] });
+      addToast({ title: "Agent started", description: "Discovering and applying to jobs...", variant: "success" });
     },
     onError: (error: any) => {
       const statusCode = error?.response?.status;
@@ -71,6 +73,7 @@ export function useAgent() {
     onSuccess: (data) => {
       setStatus(data);
       queryClient.invalidateQueries({ queryKey: ["agent-status"] });
+      queryClient.invalidateQueries({ queryKey: ["agent-logs"] });
       addToast({ title: "Agent stopped", variant: "success" });
     },
     onError: (error: any) => {

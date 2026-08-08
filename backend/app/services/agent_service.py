@@ -122,12 +122,28 @@ class AgentService:
         agent_settings.last_error = None
         await self.db.flush()
 
-        # Dispatch Celery task
+        # Dispatch Celery task via send_task (doesn't need worker module import)
         try:
             from worker.tasks.agent_tasks import run_agent_session
             run_agent_session.delay(str(user_id))
         except ImportError:
-            pass  # Worker module may not be available in API context
+            # Worker module not available in API container - use send_task instead
+            try:
+                from worker.celery_app import celery_app
+                celery_app.send_task(
+                    "worker.tasks.agent_tasks.run_agent_session",
+                    args=[str(user_id)],
+                    queue="browser",
+                )
+            except ImportError:
+                # Celery app also not importable - create minimal connection
+                from celery import Celery
+                _celery = Celery(broker=settings.CELERY_BROKER_URL)
+                _celery.send_task(
+                    "worker.tasks.agent_tasks.run_agent_session",
+                    args=[str(user_id)],
+                    queue="browser",
+                )
 
         return await self.get_status(user_id)
 
@@ -188,7 +204,21 @@ class AgentService:
             from worker.tasks.agent_tasks import run_agent_session
             run_agent_session.delay(str(user_id))
         except ImportError:
-            pass  # Worker module may not be available in API context
+            try:
+                from worker.celery_app import celery_app
+                celery_app.send_task(
+                    "worker.tasks.agent_tasks.run_agent_session",
+                    args=[str(user_id)],
+                    queue="browser",
+                )
+            except ImportError:
+                from celery import Celery
+                _celery = Celery(broker=settings.CELERY_BROKER_URL)
+                _celery.send_task(
+                    "worker.tasks.agent_tasks.run_agent_session",
+                    args=[str(user_id)],
+                    queue="browser",
+                )
 
         return await self.get_status(user_id)
 

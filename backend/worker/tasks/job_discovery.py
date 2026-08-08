@@ -529,14 +529,21 @@ def _build_search_params(prefs: Dict[str, Any]) -> Dict[str, Any]:
 
 
 async def _scrape_linkedin(
-    user_id: str, credentials: Dict[str, str], search_params: Dict[str, Any]
+    user_id: str, credentials: Dict[str, str], search_params: Dict[str, Any],
+    shared_context=None, shared_page=None,
 ) -> List[Dict[str, Any]]:
     """Scrape LinkedIn for jobs matching user preferences."""
-    scraper = LinkedInScraper(user_id=user_id)
+    if shared_context and shared_page:
+        scraper = LinkedInScraper(user_id=user_id, context=shared_context, page=shared_page)
+    else:
+        scraper = LinkedInScraper(user_id=user_id)
     try:
         await scraper.initialize()
 
-        if credentials.get("cookies"):
+        if shared_context and shared_page:
+            # Session already validated upstream -- skip cookie injection and feed check
+            scraper._is_logged_in = True
+        elif credentials.get("cookies"):
             await scraper.context.add_cookies(credentials["cookies"])
             logger.info(f"LinkedIn auth via cookies for {user_id}, verifying session...")
 

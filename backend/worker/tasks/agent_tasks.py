@@ -379,7 +379,7 @@ def _update_job_status(match_id: str, status: str, session, error: str = None):
     session.commit()
 
 
-def _run_discovery_inline(user_id: str, session, loop) -> int:
+def _run_discovery_inline(user_id: str, session, loop, shared_context=None, shared_page=None) -> int:
     """Run job discovery inline using the agent session's event loop.
 
     Returns the number of new jobs discovered.
@@ -415,7 +415,8 @@ def _run_discovery_inline(user_id: str, session, loop) -> int:
     if linkedin_creds:
         try:
             linkedin_jobs = loop.run_until_complete(
-                _scrape_linkedin(user_id, linkedin_creds, search_params)
+                _scrape_linkedin(user_id, linkedin_creds, search_params,
+                                 shared_context=shared_context, shared_page=shared_page)
             )
             if search_params.get("easy_apply_only"):
                 for job in linkedin_jobs:
@@ -636,7 +637,66 @@ def run_agent_session(self, user_id: str):
                 _log_agent_activity(user_id, "session_complete", "Agent session completed")
                 return {"status": "beta_limit", "user_id": user_id}
 
-        # Single iteration: discover → match → apply all queued → stop
+        # ── Create shared browser context for entire session ──────────
+        shared_context = None
+        shared_page = None
+        browser_mgr = None
+
+        linkedin_creds = _get_user_credentials(user_id, "linkedin", session)
+        if linkedin_creds:
+            try:
+                from worker.automation.browser_manager import BrowserManager
+                browser_mgr = BrowserManager()
+                shared_context = loop.run_until_complete(
+                    browser_mgr.get_context(user_id=user_id, platform="linkedin")
+                )
+                shared_page = loop.run_until_complete(shared_context.new_page())
+                shared_page.set_default_timeout(60000)
+
+                # Inject cookies and validate session ONCE
+                if linkedin_creds.get("cookies"):
+                    loop.run_until_complete(shared_context.add_cookies(linkedin_creds["cookies"]))
+                    _log_agent_activity(user_id, "validating_session", "Validating LinkedIn session...")
+                    session_valid = loop.run_until_complete(
+                        _validate_linkedin_session(shared_page, user_id)
+                    )
+                    if not session_valid:
+                        _log_agent_activity(
+                            user_id, "cookie_expired",
+                            "LinkedIn cookie session expired. Please update your session cookie in Settings."
+                        )
+                        _log_agent_activity(user_id, "session_complete", "Agent session completed")
+                        return {"status": "cookie_expired", "user_id": user_id}
+                    _log_agent_activity(user_id, "session_valid", "LinkedIn session validated")
+                else:
+                    # Password-based login with shared context
+                    from worker.scrapers.linkedin_scraper import LinkedInScraper
+                    temp_scraper = LinkedInScraper(user_id=user_id, context=shared_context, page=shared_page)
+                    loop.run_until_complete(
+                        temp_scraper.login(linkedin_creds["email"], linkedin_creds["password"])
+                    )
+                    _log_agent_activity(user_id, "session_valid", "LinkedIn login successful")
+
+                logger.info(f"Shared browser context created for user {user_id}")
+            except Exception as e:
+                logger.error(f"Failed to create shared browser context: {e}", exc_info=True)
+                _log_agent_activity(user_id, "browser_error", f"Browser setup failed: {str(e)}")
+                # Clean up partial setup
+                if shared_page:
+                    try:
+                        loop.run_until_complete(shared_page.close())
+                    except Exception:
+                        pass
+                if shared_context and browser_mgr:
+                    try:
+                        loop.run_until_complete(browser_mgr.release_context(user_id, "linkedin"))
+                    except Exception:
+                        pass
+                shared_context = None
+                shared_page = None
+                browser_mgr = None
+
+        # ── Pre-flight checks ─────────────────────────────────────────
         # Check for stop signal
         if _check_stop_signal(user_id):
             logger.info(f"Stop signal received for user {user_id}")
@@ -674,7 +734,10 @@ def run_agent_session(self, user_id: str):
             _log_agent_activity(user_id, "discovering_jobs", "Searching for new jobs...")
 
             try:
-                new_jobs = _run_discovery_inline(user_id, session, loop)
+                new_jobs = _run_discovery_inline(
+                    user_id, session, loop,
+                    shared_context=shared_context, shared_page=shared_page,
+                )
                 logger.info(f"Discovery completed for {user_id}: {new_jobs} new jobs")
                 _log_agent_activity(
                     user_id, "discovery_complete",
@@ -706,6 +769,9 @@ def run_agent_session(self, user_id: str):
 
         # Apply to all queued jobs
         logger.info(f"Processing {len(pending_jobs)} pending jobs for user {user_id}")
+        applications_since_check = 0
+        SESSION_CHECK_INTERVAL = 5
+
         for job in pending_jobs:
             # Check stop signal before each application
             if _check_stop_signal(user_id):
@@ -732,6 +798,18 @@ def run_agent_session(self, user_id: str):
                     )
                     break
 
+            # Periodic session health check
+            applications_since_check += 1
+            if applications_since_check >= SESSION_CHECK_INTERVAL and shared_page:
+                applications_since_check = 0
+                still_valid = loop.run_until_complete(_quick_session_check(shared_page))
+                if not still_valid:
+                    _log_agent_activity(
+                        user_id, "session_expired",
+                        "LinkedIn session expired mid-run. Please update your cookie."
+                    )
+                    break
+
             job_title = job.get("title", "Unknown")
             company = job.get("company", "Unknown")
             platform = job.get("platform", "").lower()
@@ -752,7 +830,11 @@ def run_agent_session(self, user_id: str):
                 # Apply based on platform
                 logger.info(f"Applying to {job_title} at {company} via {platform} (easy_apply={job.get('is_easy_apply')})")
                 if platform == "linkedin" and job.get("is_easy_apply"):
-                    result = loop.run_until_complete(_apply_linkedin_job(user_id, job, session))
+                    result = loop.run_until_complete(
+                        _apply_linkedin_job(user_id, job, session,
+                                            shared_context=shared_context,
+                                            shared_page=shared_page)
+                    )
                 elif platform == "naukri":
                     result = loop.run_until_complete(_apply_naukri_job(user_id, job, session))
                 else:
@@ -772,6 +854,15 @@ def run_agent_session(self, user_id: str):
                         {"screenshot": result.get("screenshot_url")}
                     )
                     _create_application_record(user_id, job, result, session)
+                elif result.get("captcha"):
+                    # CAPTCHA detected -- re-queue job and stop session (IP is flagged)
+                    _update_job_status(str(job["match_id"]), "queued", session)
+                    _log_agent_activity(
+                        user_id, "captcha_detected",
+                        f"CAPTCHA detected while applying to {job_title}. Session pausing.",
+                        {"screenshot": result.get("screenshot_url")}
+                    )
+                    break
                 elif result.get("expired"):
                     _update_job_status(str(job["match_id"]), "expired", session)
                     _log_agent_activity(
@@ -801,24 +892,42 @@ def run_agent_session(self, user_id: str):
                     )
                 else:
                     error_msg = result.get("error", "Unknown error")
-                    _update_job_status(str(job["match_id"]), "failed", session, error_msg)
-                    _increment_error_count(user_id, error_msg, session)
-                    _create_application_record(user_id, job, result, session, status="failed")
-                    _log_agent_activity(
-                        user_id, "application_failed",
-                        f"Failed to apply to {job_title}: {error_msg}"
-                    )
+                    # Retry transient errors (up to MAX_RETRIES_PER_JOB times)
+                    if _is_transient_error(error_msg):
+                        _update_job_status(
+                            str(job["match_id"]), "queued", session,
+                            f"Retrying: {error_msg}"
+                        )
+                        _log_agent_activity(
+                            user_id, "application_retry",
+                            f"Retrying {job_title} (transient error): {error_msg}"
+                        )
+                    else:
+                        _update_job_status(str(job["match_id"]), "failed", session, error_msg)
+                        _increment_error_count(user_id, error_msg, session)
+                        _create_application_record(user_id, job, result, session, status="failed")
+                        _log_agent_activity(
+                            user_id, "application_failed",
+                            f"Failed to apply to {job_title}: {error_msg}"
+                        )
 
             except Exception as e:
                 error_msg = str(e)
                 logger.error(f"Application error for job {job['job_id']}: {e}", exc_info=True)
-                _update_job_status(str(job["match_id"]), "failed", session, error_msg)
-                _increment_error_count(user_id, error_msg, session)
-                _create_application_record(user_id, job, {"error": error_msg}, session, status="failed")
-                _log_agent_activity(
-                    user_id, "application_error",
-                    f"Error applying to {job_title}: {error_msg}"
-                )
+                if _is_transient_error(error_msg):
+                    _update_job_status(str(job["match_id"]), "queued", session, f"Retrying: {error_msg}")
+                    _log_agent_activity(
+                        user_id, "application_retry",
+                        f"Retrying {job_title} (exception): {error_msg}"
+                    )
+                else:
+                    _update_job_status(str(job["match_id"]), "failed", session, error_msg)
+                    _increment_error_count(user_id, error_msg, session)
+                    _create_application_record(user_id, job, {"error": error_msg}, session, status="failed")
+                    _log_agent_activity(
+                        user_id, "application_error",
+                        f"Error applying to {job_title}: {error_msg}"
+                    )
 
             # Cooldown between applications
             _log_agent_activity(user_id, "cooldown", f"Waiting {cooldown} seconds...")
@@ -834,6 +943,18 @@ def run_agent_session(self, user_id: str):
         raise
 
     finally:
+        # Clean up shared browser context
+        if shared_page:
+            try:
+                loop.run_until_complete(shared_page.close())
+            except Exception:
+                pass
+        if shared_context and browser_mgr:
+            try:
+                loop.run_until_complete(browser_mgr.release_context(user_id, "linkedin"))
+            except Exception:
+                pass
+
         # Always release session lock and mark agent as not running
         _release_session_lock(user_id)
         if session:
@@ -848,7 +969,65 @@ def run_agent_session(self, user_id: str):
             pass
 
 
-async def _apply_linkedin_job(user_id: str, job: Dict, session) -> Dict[str, Any]:
+# Transient error patterns that should be retried
+TRANSIENT_ERRORS = [
+    "timeout", "network", "modal did not open", "navigation",
+    "ERR_", "net::", "CAPTCHA",
+]
+MAX_RETRIES_PER_JOB = 2
+
+
+def _is_transient_error(error_msg: str) -> bool:
+    """Check if an error is transient and worth retrying."""
+    msg_lower = error_msg.lower()
+    return any(pattern.lower() in msg_lower for pattern in TRANSIENT_ERRORS)
+
+
+async def _validate_linkedin_session(page, user_id: str) -> bool:
+    """Validate LinkedIn cookie session by navigating to /feed."""
+    try:
+        response = await page.goto(
+            "https://www.linkedin.com/feed",
+            wait_until="domcontentloaded",
+        )
+        await asyncio.sleep(3)
+        current_url = page.url
+        http_status = response.status if response else 0
+        logger.info(f"LinkedIn session check: HTTP {http_status}, URL: {current_url}")
+
+        if "/login" in current_url or "/authwall" in current_url:
+            logger.error(f"LinkedIn cookie expired for {user_id}: redirected to {current_url}")
+            return False
+
+        logger.info(f"LinkedIn session valid for {user_id}")
+        return True
+    except Exception as e:
+        logger.warning(f"LinkedIn session validation error for {user_id}: {e}")
+        try:
+            current_url = page.url
+            if "/feed" in current_url or "/mynetwork" in current_url:
+                logger.info(f"LinkedIn session valid despite nav error (URL: {current_url})")
+                return True
+            if "/login" in current_url or "/authwall" in current_url:
+                return False
+            # Proceed optimistically
+            return True
+        except Exception:
+            return False
+
+
+async def _quick_session_check(page) -> bool:
+    """Quick check if LinkedIn session is still valid without full navigation."""
+    try:
+        current_url = page.url
+        if "/login" in current_url or "/authwall" in current_url:
+            return False
+        return True
+    except Exception:
+        return True  # Assume valid on error to avoid false negatives
+
+
+async def _apply_linkedin_job(user_id: str, job: Dict, session, shared_context=None, shared_page=None) -> Dict[str, Any]:
     """Apply to a LinkedIn job using Easy Apply."""
     from worker.scrapers.linkedin_applicator import LinkedInApplicator
 
@@ -872,30 +1051,46 @@ async def _apply_linkedin_job(user_id: str, job: Dict, session) -> Dict[str, Any
     if resume_path:
         user_profile["resume_file_path"] = resume_path
 
-    applicator = LinkedInApplicator(user_id=user_id)
-    try:
-        await applicator.initialize()
+    # Reuse shared context if provided (single browser for entire session)
+    if shared_context and shared_page:
+        applicator = LinkedInApplicator(user_id=user_id, context=shared_context, page=shared_page)
+        try:
+            result = await applicator.apply_to_job(
+                job_url=job["url"],
+                user_profile=user_profile,
+                job_details=job,
+            )
+            return result
+        except Exception as e:
+            logger.error(f"LinkedIn application error: {e}", exc_info=True)
+            return {"success": False, "error": str(e)}
+        # No cleanup - caller owns the shared context
+    else:
+        # Fallback: create own browser context (standalone usage)
+        applicator = LinkedInApplicator(user_id=user_id)
+        try:
+            await applicator.initialize()
 
-        if credentials.get("cookies"):
-            await applicator.context.add_cookies(credentials["cookies"])
-            applicator._is_logged_in = True
-            logger.info(f"LinkedIn auth via cookies for {user_id}")
-        else:
-            await applicator.login(credentials["email"], credentials["password"])
+            if credentials.get("cookies"):
+                await applicator.context.add_cookies(credentials["cookies"])
+                applicator._is_logged_in = True
+                logger.info(f"LinkedIn auth via cookies for {user_id}")
+            else:
+                await applicator.login(credentials["email"], credentials["password"])
 
-        result = await applicator.apply_to_job(
-            job_url=job["url"],
-            user_profile=user_profile,
-            job_details=job,
-        )
-        return result
+            result = await applicator.apply_to_job(
+                job_url=job["url"],
+                user_profile=user_profile,
+                job_details=job,
+            )
+            return result
 
-    except Exception as e:
-        logger.error(f"LinkedIn application error: {e}", exc_info=True)
-        return {"success": False, "error": str(e)}
+        except Exception as e:
+            logger.error(f"LinkedIn application error: {e}", exc_info=True)
+            return {"success": False, "error": str(e)}
 
-    finally:
-        await applicator.cleanup()
+        finally:
+            await applicator.cleanup()
 
 
 async def _apply_naukri_job(user_id: str, job: Dict, session) -> Dict[str, Any]:

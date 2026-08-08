@@ -67,7 +67,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
           {/* Footer */}
           <p className="text-indigo-300/50 text-xs">
-            &copy; {new Date().getFullYear()} Augustinnovate Pvt. Ltd.
+            &copy; {new Date().getFullYear()} Built by Paarth Panthri
           </p>
         </div>
       </div>
@@ -102,7 +102,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         {/* Footer (mobile / no left panel) */}
         <div className={`lg:hidden relative z-10 mt-8 mb-6 text-center transition-all duration-700 delay-200 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
           <p className="text-xs text-muted-foreground/50">
-            &copy; {new Date().getFullYear()} Augustinnovate Pvt. Ltd.
+            &copy; {new Date().getFullYear()} Built by Paarth Panthri
           </p>
         </div>
       </div>
